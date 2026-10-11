@@ -3030,7 +3030,6 @@ class ScriptTestsLoader:
                     str() as err,
                     *rest,
                 ):
-                    witness = [str(x) for x in raw_witness_data[:-1]]
                     if not raw_witness_data or not isinstance(
                         raw_witness_data[-1], (int, float)
                     ):
@@ -3040,7 +3039,8 @@ class ScriptTestsLoader:
 
                     amount_btc = raw_witness_data[-1]
                     amount_sats = round(amount_btc * 100_000_000)
-                    comments = rest[0] if rest else ""
+                    witness = [str(x) for x in raw_witness_data[:-1]]
+                    comments = str(rest[0]) if rest else ""
                     cases.append(
                         ScriptTestCase(
                             witness=witness,
@@ -3054,7 +3054,7 @@ class ScriptTestsLoader:
                     )
 
                 case (str() as sig, str() as pk, str() as flags, str() as err, *rest):
-                    comments = rest[0] if rest else ""
+                    comments = str(rest[0]) if rest else ""
                     cases.append(
                         ScriptTestCase(
                             script_sig=sig,
