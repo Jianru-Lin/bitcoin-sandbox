@@ -635,12 +635,12 @@ class ScriptVerifyFlagsParser:
     def to_string(cls, flags: ScriptVerifyFlags) -> str:
         if flags == ScriptVerifyFlags.NONE:
             return "NONE"
-        names = [
-            flag.name
-            for flag in ScriptVerifyFlags
-            if flag != ScriptVerifyFlags.NONE and flag in flags
-        ]
-        return ",".join(filter(None, names))
+        names: list[str] = []
+        for flag in ScriptVerifyFlags:
+            if flag.value != 0 and (flags & flag) == flag:
+                assert flag.name is not None
+                names.append(flag.name)
+        return ",".join(names)
 
 
 @dataclass(frozen=True)
