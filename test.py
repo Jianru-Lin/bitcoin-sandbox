@@ -7,6 +7,8 @@ from main import (
     ScriptParser,
     ScriptStack,
     ScriptToken,
+    ScriptVerifyFlags,
+    ScriptVerifyFlagsParser,
 )
 
 parse = ScriptParser.parse
@@ -294,6 +296,15 @@ class TestScriptStack(unittest.TestCase):
         self.assertEqual(len(stack), 1)
         self.assertEqual(stack.pop_num(require_minimal=True, max_size=4), 1)
         self.assertEqual(len(stack), 0)
+
+
+class TestScriptVerifyFlagsParser(unittest.TestCase):
+    def test_parse_empty(self):
+        self.assertEqual(ScriptVerifyFlagsParser.parse(""), ScriptVerifyFlags.NONE)
+
+    def test_parse_none(self):
+        self.assertEqual(ScriptVerifyFlagsParser.parse("NONE"), ScriptVerifyFlags.NONE)
+        self.assertEqual(ScriptVerifyFlagsParser.parse("NONE,"), ScriptVerifyFlags.NONE)
 
 
 if __name__ == "__main__":
