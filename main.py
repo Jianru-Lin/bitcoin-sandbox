@@ -1,4 +1,5 @@
 import hashlib
+import json
 import random
 import socket
 import sys
@@ -6,7 +7,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import IntEnum, IntFlag
-from typing import ClassVar, NamedTuple, Protocol, Self, TypedDict, override
+from pathlib import Path
+from typing import Annotated, NamedTuple, Protocol, Self, TypedDict, cast, override
 
 from btclib.ecc import dsa, ssa
 
@@ -2953,3 +2955,119 @@ class RegTest(Network):
                 dns_seeds=[],
             )
         )
+
+
+@dataclass(frozen=True)
+class ScriptTestCase:
+    script_sig: str
+    script_pubkey: str
+    flags: ScriptVerifyFlags
+    expected_error: str
+    comments: str = ""
+    witness: list[str] | None = None
+    amount: int | None = None
+
+
+class ScriptTestsLoader:
+    type TestCommentRow = list[str]
+
+    type LegacyRow = (
+        tuple[
+            Annotated[str, "scriptSig"],
+            Annotated[str, "scriptPubKey"],
+            Annotated[str, "flags"],
+            Annotated[str, "expected_error"],
+        ]
+        | tuple[
+            Annotated[str, "scriptSig"],
+            Annotated[str, "scriptPubKey"],
+            Annotated[str, "flags"],
+            Annotated[str, "expected_error"],
+            Annotated[str, "comments"],
+        ]
+    )
+
+    type WitnessWithAmount = list[str | int | float]
+
+    type SegwitRow = (
+        tuple[
+            WitnessWithAmount,
+            Annotated[str, "scriptSig"],
+            Annotated[str, "scriptPubKey"],
+            Annotated[str, "flags"],
+            Annotated[str, "expected_error"],
+        ]
+        | tuple[
+            WitnessWithAmount,
+            Annotated[str, "scriptSig"],
+            Annotated[str, "scriptPubKey"],
+            Annotated[str, "flags"],
+            Annotated[str, "expected_error"],
+            Annotated[str, "comments"],
+        ]
+    )
+
+    type RawScriptTestItem = LegacyRow | SegwitRow | TestCommentRow
+    type RawScriptTestsJSON = list[RawScriptTestItem]
+
+    @staticmethod
+    def load(file_path: str | Path) -> list[ScriptTestCase]:
+        with open(file_path, "r", encoding="utf-8") as f:
+            raw_data = cast(ScriptTestsLoader.RawScriptTestsJSON, json.load(f))
+
+        cases: list[ScriptTestCase] = []
+
+        for index, item in enumerate(raw_data):
+            match item:
+                case list() if len(item) < 4:
+                    continue
+
+                case (
+                    list() as raw_witness_data,
+                    str() as sig,
+                    str() as pk,
+                    str() as flags,
+                    str() as err,
+                    *rest,
+                ):
+                    witness = [str(x) for x in raw_witness_data[:-1]]
+                    if not raw_witness_data or not isinstance(
+                        raw_witness_data[-1], (int, float)
+                    ):
+                        raise ValueError(
+                            f"Invalid witness data format at index {index}: {raw_witness_data!r}"
+                        )
+
+                    amount_btc = raw_witness_data[-1]
+                    amount_sats = round(amount_btc * 100_000_000)
+                    comments = rest[0] if rest else ""
+                    cases.append(
+                        ScriptTestCase(
+                            witness=witness,
+                            amount=amount_sats,
+                            script_sig=sig,
+                            script_pubkey=pk,
+                            flags=ScriptVerifyFlagsParser.parse(flags),
+                            expected_error=err,
+                            comments=comments,
+                        )
+                    )
+
+                case (str() as sig, str() as pk, str() as flags, str() as err, *rest):
+                    comments = rest[0] if rest else ""
+                    cases.append(
+                        ScriptTestCase(
+                            script_sig=sig,
+                            script_pubkey=pk,
+                            flags=ScriptVerifyFlagsParser.parse(flags),
+                            expected_error=err,
+                            comments=comments,
+                        )
+                    )
+
+                case unexpected:
+                    raise ValueError(
+                        f"Unrecognized script test case at index {index}: {unexpected!r}"
+                    )
+
+        return cases

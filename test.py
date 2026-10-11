@@ -6,6 +6,7 @@ from main import (
     ScriptNumEncoder,
     ScriptParser,
     ScriptStack,
+    ScriptTestsLoader,
     ScriptToken,
     ScriptVerifyFlags,
     ScriptVerifyFlagsParser,
@@ -320,6 +321,11 @@ class TestScriptVerifyFlagsParser(unittest.TestCase):
                 ScriptVerifyFlagsParser.parse(f",{flag.name}"),
                 ScriptVerifyFlags[flag.name],
             )
+
+
+class TestScriptTestsLoader(unittest.TestCase):
+    def test_load(self):
+        _ = ScriptTestsLoader.load("script_tests.json")
 
 
 if __name__ == "__main__":
