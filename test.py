@@ -306,6 +306,21 @@ class TestScriptVerifyFlagsParser(unittest.TestCase):
         self.assertEqual(ScriptVerifyFlagsParser.parse("NONE"), ScriptVerifyFlags.NONE)
         self.assertEqual(ScriptVerifyFlagsParser.parse("NONE,"), ScriptVerifyFlags.NONE)
 
+    def test_parse_flags(self):
+        for flag in ScriptVerifyFlags:
+            assert flag.name is not None
+            self.assertEqual(
+                ScriptVerifyFlagsParser.parse(flag.name), ScriptVerifyFlags[flag.name]
+            )
+            self.assertEqual(
+                ScriptVerifyFlagsParser.parse(f"{flag.name},"),
+                ScriptVerifyFlags[flag.name],
+            )
+            self.assertEqual(
+                ScriptVerifyFlagsParser.parse(f",{flag.name}"),
+                ScriptVerifyFlags[flag.name],
+            )
+
 
 if __name__ == "__main__":
     _ = unittest.main(verbosity=2)
