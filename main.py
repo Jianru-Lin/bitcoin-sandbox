@@ -1,6 +1,7 @@
 import hashlib
 import json
 import random
+import re
 import socket
 import sys
 from abc import ABC, abstractmethod
@@ -390,6 +391,94 @@ class ScriptCompiler:
                     writer.write_byte(regular_opcode.value)
 
         return writer.to_bytes()
+
+
+@dataclass(frozen=True)
+class ScriptAssemblyToken:
+    raw_text: str
+
+
+@dataclass(frozen=True)
+class ScriptAssemblyTokenDecimal(ScriptAssemblyToken):
+    value: int
+
+
+@dataclass(frozen=True)
+class ScriptAssemblyTokenHex(ScriptAssemblyToken):
+    data: bytes
+
+
+@dataclass(frozen=True)
+class ScriptAssemblyTokenString(ScriptAssemblyToken):
+    data: bytes
+
+
+@dataclass(frozen=True)
+class ScriptAssemblyTokenOpcode(ScriptAssemblyToken):
+    opcode: Opcode
+
+
+class ScriptAssemblyParser:
+    @staticmethod
+    def tokenize(asm: str) -> list[ScriptAssemblyToken]:
+        TOKEN_PATTERN = re.compile(r"'([^']*)'|(\S+)")
+        DECIMAL_PATTERN = re.compile(r"^[+-]?\d+$")
+        HEX_PATTERN = re.compile(r"^0[xX](?:[0-9a-fA-F]{2})*$")
+
+        tokens: list[ScriptAssemblyToken] = []
+
+        for match in TOKEN_PATTERN.finditer(asm):
+            quoted, bare = match.groups()
+
+            if quoted is not None:
+                tokens.append(
+                    ScriptAssemblyTokenString(
+                        raw_text=f"'{quoted}'",
+                        data=quoted.encode("utf-8"),
+                    )
+                )
+                continue
+
+            if bare.startswith(("0x", "0X")):
+                if not HEX_PATTERN.match(bare):
+                    raise ValueError(
+                        f"Invalid hex literal (must have even digit count): '{bare}'"
+                    )
+                hex_digits = bare[2:]
+                tokens.append(
+                    ScriptAssemblyTokenHex(
+                        raw_text=bare,
+                        data=bytes.fromhex(hex_digits) if hex_digits else b"",
+                    )
+                )
+
+            elif DECIMAL_PATTERN.match(bare):
+                tokens.append(
+                    ScriptAssemblyTokenDecimal(raw_text=bare, value=int(bare))
+                )
+
+            else:
+                upper_bare = bare.upper()
+                op_name = (
+                    upper_bare if upper_bare.startswith("OP_") else f"OP_{upper_bare}"
+                )
+                try:
+                    opcode = Opcode[op_name]
+                    tokens.append(
+                        ScriptAssemblyTokenOpcode(raw_text=bare, opcode=opcode)
+                    )
+                except KeyError:
+                    raise ValueError(
+                        f"Syntax error in script assembly: '{bare}' is neither a number, hex data, quoted string, nor valid OP_ code."
+                    ) from None
+
+        return tokens
+
+    @classmethod
+    def parse(cls, asm: str) -> bytes:
+        writer = BytesWriter()
+        tokens = cls.tokenize(asm)
+        return b""
 
 
 class ScriptNumDecoder:
@@ -3071,3 +3160,12 @@ class ScriptTestsLoader:
                     )
 
         return cases
+
+
+class ScriptTestsGenerator:
+    @staticmethod
+    def load_and_generate(
+        input_file_path: str | Path, output_file_path: str | Path
+    ) -> None:
+        data = ScriptTestsLoader.load(input_file_path)
+        # TODO

@@ -2,6 +2,11 @@ import unittest
 
 from main import (
     Opcode,
+    ScriptAssemblyParser,
+    ScriptAssemblyTokenDecimal,
+    ScriptAssemblyTokenHex,
+    ScriptAssemblyTokenOpcode,
+    ScriptAssemblyTokenString,
     ScriptNumDecoder,
     ScriptNumEncoder,
     ScriptParser,
@@ -62,6 +67,88 @@ class TestScriptParser(unittest.TestCase):
 
     #     self.assertIn("0xFF", str(ctx.exception))
     #     self.assertIn("offset 2", str(ctx.exception))
+
+
+class TestScriptAssemblyParser(unittest.TestCase):
+    def test_tokenize_empty(self):
+        self.assertEqual(ScriptAssemblyParser.tokenize(""), [])
+
+    def test_tokenize_decimal(self):
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("1"),
+            [
+                ScriptAssemblyTokenDecimal(raw_text="1", value=1),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("-1"),
+            [
+                ScriptAssemblyTokenDecimal(raw_text="-1", value=-1),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("+1"),
+            [
+                ScriptAssemblyTokenDecimal(raw_text="+1", value=1),
+            ],
+        )
+
+    def test_tokenize_hex(self):
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("0x"),
+            [
+                ScriptAssemblyTokenHex(raw_text="0x", data=b""),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("0xff"),
+            [
+                ScriptAssemblyTokenHex(raw_text="0xff", data=bytes.fromhex("ff")),
+            ],
+        )
+
+    def test_tokenize_string(self):
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("'hello world'"),
+            [
+                ScriptAssemblyTokenString(
+                    raw_text="'hello world'", data=b"hello world"
+                ),
+            ],
+        )
+
+    def test_tokenize_opcode(self):
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("OP_DUP"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="OP_DUP", opcode=Opcode.OP_DUP),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("op_dup"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="op_dup", opcode=Opcode.OP_DUP),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("DUP"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="DUP", opcode=Opcode.OP_DUP),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("dup"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="dup", opcode=Opcode.OP_DUP),
+            ],
+        )
+
+    def test_tokenize_unknown(self):
+        with self.assertRaises(ValueError):
+            _ = ScriptAssemblyParser.tokenize("OP_XXX")
+
+        with self.assertRaises(ValueError):
+            _ = ScriptAssemblyParser.tokenize("XXX")
 
 
 class TestScriptNumDecoder(unittest.TestCase):
