@@ -145,6 +145,9 @@ class TestScriptAssemblyParser(unittest.TestCase):
 
     def test_tokenize_unknown(self):
         with self.assertRaises(ValueError):
+            _ = ScriptAssemblyParser.tokenize("OP_")
+
+        with self.assertRaises(ValueError):
             _ = ScriptAssemblyParser.tokenize("OP_XXX")
 
         with self.assertRaises(ValueError):
