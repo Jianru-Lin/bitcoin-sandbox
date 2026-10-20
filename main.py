@@ -470,10 +470,10 @@ class ScriptAssemblyParser:
     )
 
     @classmethod
-    def tokenize(cls, asm: str) -> list[ScriptAssemblyToken]:
+    def tokenize(cls, assembly: str) -> list[ScriptAssemblyToken]:
         tokens: list[ScriptAssemblyToken] = []
 
-        for match in cls._TOKEN_REGEX.finditer(asm):
+        for match in cls._TOKEN_REGEX.finditer(assembly):
             kind = match.lastgroup
             assert kind is not None
             text = match.group(kind)
@@ -557,8 +557,8 @@ class ScriptAssemblyParser:
             raise ValueError(f"Push data exceeds max size: {length} bytes")
 
     @classmethod
-    def parse(cls, asm: str) -> bytes:
-        tokens = cls.tokenize(asm)
+    def parse(cls, assembly: str) -> bytes:
+        tokens = cls.tokenize(assembly)
         writer = BytesWriter()
 
         for token in tokens:

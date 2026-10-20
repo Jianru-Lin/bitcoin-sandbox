@@ -8,6 +8,7 @@ from main import (
     ScriptAssemblyTokenHex,
     ScriptAssemblyTokenOpcode,
     ScriptAssemblyTokenString,
+    ScriptCompiler,
     ScriptNumDecoder,
     ScriptNumEncoder,
     ScriptParser,
@@ -237,6 +238,49 @@ class TestScriptAssemblyParser(unittest.TestCase):
     def test_tokenize_opcode_blacklist(self):
         with self.assertRaises(ValueError):
             _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA_DIRECT")
+
+    def test_parse_empty(self):
+        self.assertEqual(ScriptAssemblyParser.parse(""), b"")
+        self.assertEqual(ScriptAssemblyParser.parse("0x"), b"")
+        self.assertEqual(ScriptAssemblyParser.parse("0x 0x"), b"")
+
+    def test_parse_string(self):
+        self.assertEqual(ScriptAssemblyParser.parse("''"), b"\x00")
+        self.assertEqual(ScriptAssemblyParser.parse("'a'"), b"\x01" + b"a")
+        self.assertEqual(ScriptAssemblyParser.parse("'😄'"), b"\x04" + "😄".encode())
+
+    def test_parse_decimal(self):
+        self.assertEqual(ScriptAssemblyParser.parse("0"), b"\x00")
+
+    def test_parse_hex(self):
+        self.assertEqual(ScriptAssemblyParser.parse("0x"), b"")
+        self.assertEqual(ScriptAssemblyParser.parse("0x00"), b"\x00")
+        self.assertEqual(ScriptAssemblyParser.parse("0x00 0x01"), b"\x00\x01")
+        self.assertEqual(ScriptAssemblyParser.parse("0x0001"), b"\x00\x01")
+
+    def test_parse_opcode(self):
+        self.assertEqual(
+            ScriptAssemblyParser.parse("OP_DUP"), bytes([Opcode.OP_DUP.value])
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.parse("DUP"), bytes([Opcode.OP_DUP.value])
+        )
+
+    def test_parse_simple(self):
+        self.assertEqual(
+            ScriptAssemblyParser.parse("1 1 OP_ADD"),
+            b"\x51\x51\x93",
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.parse("1 1 OP_ADD"),
+            ScriptCompiler.compile(
+                [
+                    ScriptToken(offset=0, opcode=Opcode.OP_1),
+                    ScriptToken(offset=1, opcode=Opcode.OP_1),
+                    ScriptToken(offset=2, opcode=Opcode.OP_ADD),
+                ]
+            ),
+        )
 
 
 class TestScriptNumDecoder(unittest.TestCase):
