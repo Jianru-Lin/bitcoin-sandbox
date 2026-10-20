@@ -194,6 +194,36 @@ class TestScriptAssemblyParser(unittest.TestCase):
             ],
         )
 
+    def test_tokenize_opcode_alias(self):
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("OP_TRUE"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="OP_TRUE", opcode=Opcode.OP_1),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("OP_FALSE"),
+            [
+                ScriptAssemblyTokenOpcode(raw_text="OP_FALSE", opcode=Opcode.OP_0),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("OP_NOP2"),
+            [
+                ScriptAssemblyTokenOpcode(
+                    raw_text="OP_NOP2", opcode=Opcode.OP_CHECKLOCKTIMEVERIFY
+                ),
+            ],
+        )
+        self.assertEqual(
+            ScriptAssemblyParser.tokenize("OP_NOP3"),
+            [
+                ScriptAssemblyTokenOpcode(
+                    raw_text="OP_NOP3", opcode=Opcode.OP_CHECKSEQUENCEVERIFY
+                ),
+            ],
+        )
+
     def test_tokenize_unknown(self):
         with self.assertRaises(ValueError):
             _ = ScriptAssemblyParser.tokenize("OP_")

@@ -511,7 +511,11 @@ class ScriptAssemblyParser:
                     upper_bare if upper_bare.startswith("OP_") else f"OP_{upper_bare}"
                 )
                 try:
-                    opcode = Opcode[op_name]
+                    opcode = OpcodeAliases.resolve_name(op_name)
+                    if opcode is None:
+                        raise ValueError(
+                            f"Syntax error in script assembly: '{bare}' is neither a number, hex data, quoted string, nor valid OP_ code."
+                        )
                     tokens.append(
                         ScriptAssemblyTokenOpcode(raw_text=bare, opcode=opcode)
                     )
