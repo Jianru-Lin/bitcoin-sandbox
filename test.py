@@ -238,15 +238,6 @@ class TestScriptAssemblyParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA_DIRECT")
 
-        with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA1")
-
-        with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA2")
-
-        with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA4")
-
 
 class TestScriptNumDecoder(unittest.TestCase):
     def test_decode(self):

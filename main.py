@@ -490,16 +490,18 @@ class ScriptAssemblyParser:
 
                 case "hex":
                     hex_digits = text[2:]
-                    if len(hex_digits) % 2 != 0 or not all(
-                        c in "0123456789abcdefABCDEF" for c in hex_digits
-                    ):
+                    if len(hex_digits) % 2 != 0:
                         raise ValueError(
                             f"Invalid hex literal (must have even digit count): '{text}'"
                         )
+                    try:
+                        hex_data = bytes.fromhex(hex_digits) if hex_digits else b""
+                    except ValueError:
+                        raise ValueError(f"Invalid hex characters in literal: '{text}'")
                     tokens.append(
                         ScriptAssemblyTokenHex(
                             raw_text=text,
-                            data=bytes.fromhex(hex_digits) if hex_digits else b"",
+                            data=hex_data,
                         )
                     )
 
