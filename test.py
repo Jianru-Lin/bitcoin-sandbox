@@ -306,13 +306,8 @@ class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
                 script=case.script_sig,
                 comment=case.comments,
             ):
-                try:
-                    compiled_sig = ScriptAssemblyParser.parse(case.script_sig)
-                    self.assertIsInstance(compiled_sig, bytes)
-                except Exception as e:
-                    self.fail(
-                        f"[Case #{idx}] Failed to parse script_sig: '{case.script_sig}'. Error: {e}"
-                    )
+                compiled_sig = ScriptAssemblyParser.parse(case.script_sig)
+                self.assertIsInstance(compiled_sig, bytes)
 
             with self.subTest(
                 index=idx,
@@ -320,13 +315,8 @@ class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
                 script=case.script_pubkey,
                 comment=case.comments,
             ):
-                try:
-                    compiled_pk = ScriptAssemblyParser.parse(case.script_pubkey)
-                    self.assertIsInstance(compiled_pk, bytes)
-                except Exception as e:
-                    self.fail(
-                        f"[Case #{idx}] Failed to parse script_pubkey: '{case.script_pubkey}'. Error: {e}"
-                    )
+                compiled_pk = ScriptAssemblyParser.parse(case.script_pubkey)
+                self.assertIsInstance(compiled_pk, bytes)
 
 
 class TestScriptNumDecoder(unittest.TestCase):
