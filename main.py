@@ -9,7 +9,17 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import IntEnum, IntFlag
 from pathlib import Path
-from typing import Annotated, NamedTuple, Protocol, Self, TypedDict, cast, override
+from pydoc import classname
+from typing import (
+    Annotated,
+    ClassVar,
+    NamedTuple,
+    Protocol,
+    Self,
+    TypedDict,
+    cast,
+    override,
+)
 
 from btclib.ecc import dsa, ssa
 
@@ -209,6 +219,37 @@ class Opcode(IntEnum):
     OP_NOP9 = 0xB8
     OP_NOP10 = 0xB9
     OP_INVALIDOPCODE = 0xFF
+
+
+class OpcodeAliases:
+    _FORWARD_MAP: ClassVar[dict[str, Opcode]] = {
+        "OP_FALSE": Opcode.OP_0,
+        "OP_TRUE": Opcode.OP_1,
+        "OP_NOP2": Opcode.OP_CHECKLOCKTIMEVERIFY,
+        "OP_NOP3": Opcode.OP_CHECKSEQUENCEVERIFY,
+    }
+
+    _REVERSE_MAP: ClassVar[dict[Opcode, str]] = {
+        Opcode.OP_0: "OP_FALSE",
+        Opcode.OP_1: "OP_TRUE",
+        Opcode.OP_CHECKLOCKTIMEVERIFY: "OP_NOP2",
+        Opcode.OP_CHECKSEQUENCEVERIFY: "OP_NOP3",
+    }
+
+    @classmethod
+    def resolve_name(cls, name: str) -> Opcode | None:
+        name_upper = name.upper()
+        if name_upper in cls._FORWARD_MAP:
+            return cls._FORWARD_MAP[name_upper]
+
+        try:
+            return Opcode[name_upper]
+        except KeyError:
+            return None
+
+    @classmethod
+    def get_alias(cls, opcode: Opcode) -> str | None:
+        return cls._REVERSE_MAP.get(opcode)
 
 
 # Check here https://github.com/bitcoin/bitcoin/blob/master/src/script/script_error.h
@@ -419,6 +460,13 @@ class ScriptAssemblyTokenOpcode(ScriptAssemblyToken):
 
 
 class ScriptAssemblyParser:
+    OPCODE_ALIASES: ClassVar[dict[str, Opcode]] = {
+        "OP_FALSE": Opcode.OP_0,
+        "OP_TRUE": Opcode.OP_1,
+        "OP_NOP2": Opcode.OP_CHECKLOCKTIMEVERIFY,
+        "OP_NOP3": Opcode.OP_CHECKSEQUENCEVERIFY,
+    }
+
     @staticmethod
     def tokenize(asm: str) -> list[ScriptAssemblyToken]:
         TOKEN_PATTERN = re.compile(r"'([^']*)'|(\S+)")

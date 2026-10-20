@@ -2,6 +2,7 @@ import unittest
 
 from main import (
     Opcode,
+    OpcodeAliases,
     ScriptAssemblyParser,
     ScriptAssemblyTokenDecimal,
     ScriptAssemblyTokenHex,
@@ -18,6 +19,56 @@ from main import (
 )
 
 parse = ScriptParser.parse
+
+
+class TestOpcode(unittest.TestCase):
+    def test_all_opcode_names_are_uppercase(self):
+        for name, member in Opcode.__members__.items():
+            with self.subTest(opcode_name=name, member=member):
+                self.assertTrue(
+                    name.isupper(),
+                    f"Opcode name '{name}' is not fully uppercase",
+                )
+
+    def test_all_opcode_names_start_with_op_prefix(self):
+        for name, member in Opcode.__members__.items():
+            with self.subTest(opcode_name=name, member=member):
+                self.assertTrue(
+                    name.startswith("OP_"),
+                    f"Opcode name '{name}' does not start with 'OP_'",
+                )
+
+
+class TestOpcodeAlias(unittest.TestCase):
+    def test_resolve_name(self):
+        self.assertEqual(OpcodeAliases.resolve_name("OP_TRUE"), Opcode.OP_1)
+        self.assertEqual(OpcodeAliases.resolve_name("op_true"), Opcode.OP_1)
+        self.assertEqual(OpcodeAliases.resolve_name("OP_FALSE"), Opcode.OP_0)
+        self.assertEqual(OpcodeAliases.resolve_name("op_false"), Opcode.OP_0)
+        self.assertEqual(
+            OpcodeAliases.resolve_name("OP_NOP2"), Opcode.OP_CHECKLOCKTIMEVERIFY
+        )
+        self.assertEqual(
+            OpcodeAliases.resolve_name("op_nop2"), Opcode.OP_CHECKLOCKTIMEVERIFY
+        )
+        self.assertEqual(
+            OpcodeAliases.resolve_name("OP_NOP3"), Opcode.OP_CHECKSEQUENCEVERIFY
+        )
+        self.assertEqual(
+            OpcodeAliases.resolve_name("op_nop3"), Opcode.OP_CHECKSEQUENCEVERIFY
+        )
+
+    def test_get_alias(self):
+        self.assertEqual(OpcodeAliases.get_alias(Opcode.OP_0), "OP_FALSE")
+        self.assertEqual(OpcodeAliases.get_alias(Opcode.OP_1), "OP_TRUE")
+        self.assertEqual(OpcodeAliases.get_alias(Opcode.OP_2), None)
+        self.assertEqual(OpcodeAliases.get_alias(Opcode.OP_3), None)
+        self.assertEqual(
+            OpcodeAliases.get_alias(Opcode.OP_CHECKLOCKTIMEVERIFY), "OP_NOP2"
+        )
+        self.assertEqual(
+            OpcodeAliases.get_alias(Opcode.OP_CHECKSEQUENCEVERIFY), "OP_NOP3"
+        )
 
 
 class TestScriptParser(unittest.TestCase):
