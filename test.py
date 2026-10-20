@@ -1,4 +1,7 @@
 import unittest
+from pathlib import Path
+
+from typing_extensions import ClassVar
 
 from main import (
     Opcode,
@@ -281,6 +284,42 @@ class TestScriptAssemblyParser(unittest.TestCase):
                 ]
             ),
         )
+
+
+class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
+    def test_parse_all_script_cases(self) -> None:
+        test_file_path = Path(__file__).parent / "script_tests.json"
+        cases = ScriptTestsLoader.load(test_file_path)
+        self.assertGreater(len(cases), 0, "No test cases loaded.")
+
+        for idx, case in enumerate(cases):
+            with self.subTest(
+                index=idx,
+                field="script_sig",
+                script=case.script_sig,
+                comment=case.comments,
+            ):
+                try:
+                    compiled_sig = ScriptAssemblyParser.parse(case.script_sig)
+                    self.assertIsInstance(compiled_sig, bytes)
+                except Exception as e:
+                    self.fail(
+                        f"[Case #{idx}] Failed to parse script_sig: '{case.script_sig}'. Error: {e}"
+                    )
+
+            with self.subTest(
+                index=idx,
+                field="script_pubkey",
+                script=case.script_pubkey,
+                comment=case.comments,
+            ):
+                try:
+                    compiled_pk = ScriptAssemblyParser.parse(case.script_pubkey)
+                    self.assertIsInstance(compiled_pk, bytes)
+                except Exception as e:
+                    self.fail(
+                        f"[Case #{idx}] Failed to parse script_pubkey: '{case.script_pubkey}'. Error: {e}"
+                    )
 
 
 class TestScriptNumDecoder(unittest.TestCase):
