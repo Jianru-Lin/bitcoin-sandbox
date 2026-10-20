@@ -461,10 +461,12 @@ class ScriptAssemblyTokenOpcode(ScriptAssemblyToken):
 class ScriptAssemblyParser:
     _TOKEN_REGEX: ClassVar[re.Pattern[str]] = re.compile(
         r"""
-        (?P<quoted>'[^']*')
-        | (?P<hex>0[xX]\S*)
-        | (?P<decimal>[+-]?\d+)
-        | (?P<bare>\S+)
+        (?:
+            (?P<quoted>'[^']*')
+            | (?P<hex>0[xX]\S*)
+            | (?P<decimal>[+-]?\d+)
+            | (?P<bare>\S+)
+        )(?=\s|$)
         """,
         re.VERBOSE,
     )
