@@ -532,11 +532,90 @@ class ScriptAssemblyParser:
 
         return tokens
 
+    @staticmethod
+    def _write_push_data(writer: BytesWriter, data: bytes):
+        length = len(data)
+        if length == 0:
+            writer.write_byte(0)
+        elif length <= 75:
+            # Opcode.OP_PUSHDATA_DIRECT
+            writer.write_byte(length)
+            writer.write_bytes(data)
+        elif length <= 0xFF:
+            writer.write_byte(Opcode.OP_PUSHDATA1.value)
+            writer.write_byte(length)
+            writer.write_bytes(data)
+        elif length <= 0xFFFF:
+            writer.write_byte(Opcode.OP_PUSHDATA2.value)
+            writer.write_uint16_le(length)
+            writer.write_bytes(data)
+        elif length <= 0xFFFFFFFF:
+            writer.write_byte(Opcode.OP_PUSHDATA4.value)
+            writer.write_uint32_le(length)
+            writer.write_bytes(data)
+        else:
+            raise ValueError(f"Push data exceeds max size: {length} bytes")
+
     @classmethod
     def parse(cls, asm: str) -> bytes:
-        writer = BytesWriter()
         tokens = cls.tokenize(asm)
-        return b""
+        writer = BytesWriter()
+
+        for token in tokens:
+            match token:
+                case ScriptAssemblyTokenHex(data=raw_data):
+                    writer.write_bytes(raw_data)
+
+                case ScriptAssemblyTokenString(data=raw_data):
+                    cls._write_push_data(writer, raw_data)
+
+                case ScriptAssemblyTokenDecimal(value=value):
+                    if value == -1:
+                        writer.write_byte(Opcode.OP_1NEGATE.value)
+                    elif value == 0:
+                        writer.write_byte(Opcode.OP_0.value)
+                    elif value == 1:
+                        writer.write_byte(Opcode.OP_1.value)
+                    elif value == 2:
+                        writer.write_byte(Opcode.OP_2.value)
+                    elif value == 3:
+                        writer.write_byte(Opcode.OP_3.value)
+                    elif value == 4:
+                        writer.write_byte(Opcode.OP_4.value)
+                    elif value == 5:
+                        writer.write_byte(Opcode.OP_5.value)
+                    elif value == 6:
+                        writer.write_byte(Opcode.OP_6.value)
+                    elif value == 7:
+                        writer.write_byte(Opcode.OP_7.value)
+                    elif value == 8:
+                        writer.write_byte(Opcode.OP_8.value)
+                    elif value == 9:
+                        writer.write_byte(Opcode.OP_9.value)
+                    elif value == 10:
+                        writer.write_byte(Opcode.OP_10.value)
+                    elif value == 11:
+                        writer.write_byte(Opcode.OP_11.value)
+                    elif value == 12:
+                        writer.write_byte(Opcode.OP_12.value)
+                    elif value == 13:
+                        writer.write_byte(Opcode.OP_13.value)
+                    elif value == 14:
+                        writer.write_byte(Opcode.OP_14.value)
+                    elif value == 15:
+                        writer.write_byte(Opcode.OP_15.value)
+                    elif value == 16:
+                        writer.write_byte(Opcode.OP_16.value)
+                    else:
+                        cls._write_push_data(writer, ScriptNumEncoder.encode(value))
+
+                case ScriptAssemblyTokenOpcode(opcode=opcode):
+                    writer.write_byte(opcode.value)
+
+                case _:
+                    raise RuntimeError(f"Unhandled token type: {type(token).__name__}")
+
+        return writer.to_bytes()
 
 
 class ScriptNumDecoder:
