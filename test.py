@@ -22,7 +22,7 @@ from main import (
     ScriptVerifyFlagsParser,
 )
 
-parse = ScriptParser.parse
+script_tests_json_file_path = Path(__file__).parent / "script_tests.json"
 
 
 class TestOpcode(unittest.TestCase):
@@ -77,7 +77,7 @@ class TestOpcodeAlias(unittest.TestCase):
 
 class TestScriptParser(unittest.TestCase):
     def test_empty_script(self):
-        self.assertEqual(parse(b""), [])
+        self.assertEqual(ScriptParser.parse(b""), [])
 
     def test_single_and_combined_opcodes(self):
         raw = bytes(
@@ -94,12 +94,12 @@ class TestScriptParser(unittest.TestCase):
             ScriptToken(2, Opcode.OP_EQUALVERIFY),
             ScriptToken(3, Opcode.OP_CHECKSIG),
         ]
-        self.assertEqual(parse(raw), expected)
+        self.assertEqual(ScriptParser.parse(raw), expected)
 
     def test_direct_pushdata_direct(self):
         raw_4bytes = b"\x04\xde\xad\xbe\xef"
         self.assertEqual(
-            parse(raw_4bytes),
+            ScriptParser.parse(raw_4bytes),
             [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, b"\xde\xad\xbe\xef")],
         )
 
@@ -107,13 +107,16 @@ class TestScriptParser(unittest.TestCase):
         data_75 = b"A" * 75
         raw_75bytes = b"\x4b" + data_75
         self.assertEqual(
-            parse(raw_75bytes), [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, data_75)]
+            ScriptParser.parse(raw_75bytes),
+            [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, data_75)],
         )
 
     def test_pushdata1(self):
         data_80 = b"B" * 80
         raw = b"\x4c\x50" + data_80
-        self.assertEqual(parse(raw), [ScriptToken(0, Opcode.OP_PUSHDATA1, data_80)])
+        self.assertEqual(
+            ScriptParser.parse(raw), [ScriptToken(0, Opcode.OP_PUSHDATA1, data_80)]
+        )
 
     # def test_unknown_opcode_raises_error(self):
     #     raw = bytes([0x76, 0xA9, 0xFF, 0x88])
@@ -288,8 +291,7 @@ class TestScriptAssemblyParser(unittest.TestCase):
 
 class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
     def test_parse_all_script_cases(self) -> None:
-        test_file_path = Path(__file__).parent / "script_tests.json"
-        cases = ScriptTestsLoader.load(test_file_path)
+        cases = ScriptTestsLoader.load(script_tests_json_file_path)
         self.assertGreater(len(cases), 0, "No test cases loaded.")
 
         for idx, case in enumerate(cases):
