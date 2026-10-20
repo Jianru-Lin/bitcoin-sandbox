@@ -460,22 +460,15 @@ class ScriptAssemblyTokenOpcode(ScriptAssemblyToken):
 
 
 class ScriptAssemblyParser:
-    OPCODE_ALIASES: ClassVar[dict[str, Opcode]] = {
-        "OP_FALSE": Opcode.OP_0,
-        "OP_TRUE": Opcode.OP_1,
-        "OP_NOP2": Opcode.OP_CHECKLOCKTIMEVERIFY,
-        "OP_NOP3": Opcode.OP_CHECKSEQUENCEVERIFY,
-    }
+    TOKEN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"'([^']*)'|(\S+)")
+    DECIMAL_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"^[+-]?\d+$")
+    HEX_PATTERN: ClassVar[re.Pattern[str]] = re.compile(r"^0[xX](?:[0-9a-fA-F]{2})*$")
 
-    @staticmethod
-    def tokenize(asm: str) -> list[ScriptAssemblyToken]:
-        TOKEN_PATTERN = re.compile(r"'([^']*)'|(\S+)")
-        DECIMAL_PATTERN = re.compile(r"^[+-]?\d+$")
-        HEX_PATTERN = re.compile(r"^0[xX](?:[0-9a-fA-F]{2})*$")
-
+    @classmethod
+    def tokenize(cls, asm: str) -> list[ScriptAssemblyToken]:
         tokens: list[ScriptAssemblyToken] = []
 
-        for match in TOKEN_PATTERN.finditer(asm):
+        for match in cls.TOKEN_PATTERN.finditer(asm):
             quoted, bare = match.groups()
 
             if quoted is not None:
@@ -488,7 +481,7 @@ class ScriptAssemblyParser:
                 continue
 
             if bare.startswith(("0x", "0X")):
-                if not HEX_PATTERN.match(bare):
+                if not cls.HEX_PATTERN.match(bare):
                     raise ValueError(
                         f"Invalid hex literal (must have even digit count): '{bare}'"
                     )
@@ -500,7 +493,7 @@ class ScriptAssemblyParser:
                     )
                 )
 
-            elif DECIMAL_PATTERN.match(bare):
+            elif cls.DECIMAL_PATTERN.match(bare):
                 tokens.append(
                     ScriptAssemblyTokenDecimal(raw_text=bare, value=int(bare))
                 )
@@ -510,19 +503,13 @@ class ScriptAssemblyParser:
                 op_name = (
                     upper_bare if upper_bare.startswith("OP_") else f"OP_{upper_bare}"
                 )
-                try:
-                    opcode = OpcodeAliases.resolve_name(op_name)
-                    if opcode is None:
-                        raise ValueError(
-                            f"Syntax error in script assembly: '{bare}' is neither a number, hex data, quoted string, nor valid OP_ code."
-                        )
-                    tokens.append(
-                        ScriptAssemblyTokenOpcode(raw_text=bare, opcode=opcode)
-                    )
-                except KeyError:
+                opcode = OpcodeAliases.resolve_name(op_name)
+                if opcode is None or opcode is Opcode.OP_PUSHDATA_DIRECT:
                     raise ValueError(
                         f"Syntax error in script assembly: '{bare}' is neither a number, hex data, quoted string, nor valid OP_ code."
-                    ) from None
+                    )
+
+                tokens.append(ScriptAssemblyTokenOpcode(raw_text=bare, opcode=opcode))
 
         return tokens
 
