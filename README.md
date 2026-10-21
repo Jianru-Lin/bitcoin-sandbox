@@ -55,3 +55,6 @@ Here is how AI is—and isn't—used in this project:
 - [bitcoin/src/script/interpreter.h](https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.h)
 - [bitcoin/src/script/interpreter.cpp](https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.cpp)
 - [bitcoin/src/test/data/script_tests.json](https://github.com/bitcoin/bitcoin/blob/master/src/test/data/script_tests.json)
+- [btclib](https://btclib.org/)
+- [A from-scratch tour of Bitcoin in Python](https://karpathy.github.io/2021/06/21/blockchain/)
+- [Programming Bitcoin](https://github.com/jimmysong/programmingbitcoin)
