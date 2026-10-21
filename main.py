@@ -317,7 +317,7 @@ class ScriptToken(NamedTuple):
     data: bytes | None = None  # only for OP_PUSHDATA
 
 
-class ScriptParser:
+class BytecodeParser:
     _reader: BytesReader
 
     def __init__(self, raw_script: bytes) -> None:
@@ -373,11 +373,11 @@ class ScriptParser:
 
     @staticmethod
     def parse(raw_script: bytes) -> list[ScriptToken]:
-        parser = ScriptParser(raw_script)
+        parser = BytecodeParser(raw_script)
         return list(parser)
 
 
-class ScriptCompiler:
+class BytecodeCompiler:
     @staticmethod
     def compile(tokens: list[ScriptToken]) -> bytes:
         writer = BytesWriter()
@@ -2951,7 +2951,7 @@ class ScriptInterpreter:
 
     def execute(self, script_bytes: bytes) -> ScriptContext.Terminated:
         self.ctx.state = ScriptContext.Running()
-        parser = ScriptParser(script_bytes)
+        parser = BytecodeParser(script_bytes)
         for token in parser:
             self._step(token)
             if isinstance(self.ctx.state, ScriptContext.Terminated):

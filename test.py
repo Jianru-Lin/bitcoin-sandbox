@@ -1,20 +1,18 @@
 import unittest
 from pathlib import Path
 
-from typing_extensions import ClassVar
-
 from main import (
     AssemblyParser,
     AssemblyTokenDecimal,
     AssemblyTokenHex,
     AssemblyTokenOpcode,
     AssemblyTokenString,
+    BytecodeCompiler,
+    BytecodeParser,
     Opcode,
     OpcodeAliases,
-    ScriptCompiler,
     ScriptNumDecoder,
     ScriptNumEncoder,
-    ScriptParser,
     ScriptStack,
     ScriptTestsLoader,
     ScriptToken,
@@ -75,9 +73,9 @@ class TestOpcodeAlias(unittest.TestCase):
         )
 
 
-class TestScriptParser(unittest.TestCase):
+class TestBytecodeParser(unittest.TestCase):
     def test_empty_script(self):
-        self.assertEqual(ScriptParser.parse(b""), [])
+        self.assertEqual(BytecodeParser.parse(b""), [])
 
     def test_single_and_combined_opcodes(self):
         raw = bytes(
@@ -94,12 +92,12 @@ class TestScriptParser(unittest.TestCase):
             ScriptToken(2, Opcode.OP_EQUALVERIFY),
             ScriptToken(3, Opcode.OP_CHECKSIG),
         ]
-        self.assertEqual(ScriptParser.parse(raw), expected)
+        self.assertEqual(BytecodeParser.parse(raw), expected)
 
     def test_direct_pushdata_direct(self):
         raw_4bytes = b"\x04\xde\xad\xbe\xef"
         self.assertEqual(
-            ScriptParser.parse(raw_4bytes),
+            BytecodeParser.parse(raw_4bytes),
             [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, b"\xde\xad\xbe\xef")],
         )
 
@@ -107,7 +105,7 @@ class TestScriptParser(unittest.TestCase):
         data_75 = b"A" * 75
         raw_75bytes = b"\x4b" + data_75
         self.assertEqual(
-            ScriptParser.parse(raw_75bytes),
+            BytecodeParser.parse(raw_75bytes),
             [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, data_75)],
         )
 
@@ -115,7 +113,7 @@ class TestScriptParser(unittest.TestCase):
         data_80 = b"B" * 80
         raw = b"\x4c\x50" + data_80
         self.assertEqual(
-            ScriptParser.parse(raw), [ScriptToken(0, Opcode.OP_PUSHDATA1, data_80)]
+            BytecodeParser.parse(raw), [ScriptToken(0, Opcode.OP_PUSHDATA1, data_80)]
         )
 
     # def test_unknown_opcode_raises_error(self):
@@ -127,7 +125,7 @@ class TestScriptParser(unittest.TestCase):
     #     self.assertIn("offset 2", str(ctx.exception))
 
 
-class TestScriptAssemblyParser(unittest.TestCase):
+class TestAssemblyParser(unittest.TestCase):
     def test_tokenize_empty(self):
         self.assertEqual(AssemblyParser.tokenize(""), [])
 
@@ -273,7 +271,7 @@ class TestScriptAssemblyParser(unittest.TestCase):
         )
         self.assertEqual(
             AssemblyParser.parse("1 1 OP_ADD"),
-            ScriptCompiler.compile(
+            BytecodeCompiler.compile(
                 [
                     ScriptToken(offset=0, opcode=Opcode.OP_1),
                     ScriptToken(offset=1, opcode=Opcode.OP_1),
@@ -283,7 +281,7 @@ class TestScriptAssemblyParser(unittest.TestCase):
         )
 
 
-class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
+class TestAssemblyParserWithTestCases(unittest.TestCase):
     def test_parse_all_script_cases(self) -> None:
         cases = ScriptTestsLoader.load(script_tests_json_file_path)
         self.assertGreater(len(cases), 0, "No test cases loaded.")
