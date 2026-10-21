@@ -4,16 +4,12 @@
 
 Unlike production node software, Bitcoin Sandbox packages everything into a single, cohesive codebase. Whether you want to study Bitcoin’s underlying mechanisms, spin up an isolated custom network for teaching, or prototype cutting-edge features (such as alternative signature schemes, new VM opcodes, or AI integrations), this sandbox provides a complete, hackable environment.
 
----
-
 ## Key Features
 
 - **Complete Bitcoin Node Stack:** Encompasses the Bitcoin Script VM, P2P networking layer, RPC interface, mining framework, and wallet functionalities.
 - **Custom Networks & DNS Seeding:** Easily launch private custom networks for academic or classroom experiments, including support for custom DNSSeeder servers and local block mining.
 - **Pure Python & Extensible:** Built using modern Python (`btclib` for elliptic curve cryptography), making it readable, highly extensible, and easy to modify for advanced research (e.g., post-quantum cryptography, novel VM instructions).
 - **Robust Script Engine:** Implements bytecode parsing, assembly compilation, script evaluation, and validation flags mirroring Bitcoin Core.
-
----
 
 ## Current Development Progress & Roadmap
 
@@ -36,13 +32,9 @@ We are building the core components incrementally, starting from the foundation 
 
 - Exposing standard JSON-RPC endpoints for local development and wallet management (key generation, signing, and broadcasting).
 
----
-
 ## Getting Started
 
 _(Quick start instructions and usage examples coming soon as core modules are finalized.)_
-
----
 
 ## References
 
