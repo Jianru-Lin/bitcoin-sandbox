@@ -21,6 +21,7 @@ from main import (
 )
 
 script_tests_json_file_path = Path(__file__).parent / "script_tests.json"
+cases = ScriptTestsLoader.load(script_tests_json_file_path)
 
 
 class TestOpcode(unittest.TestCase):
@@ -283,7 +284,6 @@ class TestAssemblyParser(unittest.TestCase):
 
 class TestAssemblyParserWithTestCases(unittest.TestCase):
     def test_parse_all_script_cases(self) -> None:
-        cases = ScriptTestsLoader.load(script_tests_json_file_path)
         self.assertGreater(len(cases), 0, "No test cases loaded.")
 
         for idx, case in enumerate(cases):
@@ -574,7 +574,7 @@ class TestScriptVerifyFlagsParser(unittest.TestCase):
 
 class TestScriptTestsLoader(unittest.TestCase):
     def test_load(self):
-        _ = ScriptTestsLoader.load("script_tests.json")
+        _ = ScriptTestsLoader.load(script_tests_json_file_path)
 
 
 if __name__ == "__main__":
