@@ -1,0 +1,58 @@
+version = 1
+revision = 3
+requires-python = ">=3.15"
+
+[[package]]
+name = "bitcoin-core-rpc"
+version = "2026.10.17"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/6f/f1f169e7062764a1f8f7e5664077728d1e004310c72b41264136b0ff89de/bitcoin_core_rpc-2026.10.17.tar.gz", hash = "sha256:5ee180b85c9427c0c143c3e310d0e19df2305e63af7548cdcbfe97ae066de554", size = 769559, upload-time = "2026-10-17T11:52:22.024Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/29/02/7529cddb2d8bcf333234f802e10e7b4fb4f37841db3bdd11c49eb3d6fc72/bitcoin_core_rpc-2026.10.17-py3-none-any.whl", hash = "sha256:4e8491c47f9d430024d70511f2714c367d81f17534f8d8e93876dd085aa917b1", size = 74926, upload-time = "2026-10-17T11:52:20.465Z" },
+]
+
+[[package]]
+name = "bitcoin-sandbox"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "btclib" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "btclib" }]
+
+[[package]]
+name = "btclib"
+version = "2026.10.17"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "bitcoin-core-rpc" },
+    { name = "btclib-ecc" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/56/63/758179e77dfede5216120a8bfeaa480b3fa8ff3f30600f44f551c66181cc/btclib-2026.10.17.tar.gz", hash = "sha256:f4e334abd94c916b29a10272c24a8364a055b496e17eb749feccd71062c2c75e", size = 7452906, upload-time = "2026-10-17T23:27:57.929Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/7d/d813f1572019e2cdb6241e946d2364c327b9929c596ba30e27e1d49cd798/btclib-2026.10.17-py3-none-any.whl", hash = "sha256:421f5065e3cac734d56843e00e7bb94ccb129822093e97d4ffbeed8b554b9ea1", size = 443139, upload-time = "2026-10-17T23:27:56.419Z" },
+]
+
+[[package]]
+name = "btclib-ecc"
+version = "2026.10.17"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d1/56/1c90122d2df7bedfa3bdfc424e027cec839c2fcf756094cdd1dc79dd21c9/btclib_ecc-2026.10.17.tar.gz", hash = "sha256:a1265980826773a0b0c0027eb221c28f4813cdfa9af1bd65d5b822b3330a1a69", size = 2012963, upload-time = "2026-10-17T13:37:05.262Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/45/3b135738c13fc6db649a51b92e2dad660e813b631e4bb1879b425e71dbcf/btclib_ecc-2026.10.17-py3-none-any.whl", hash = "sha256:8821e1482532c1361f03b9d89bcb2c6a490df32a90c1901535c9858dd18dc702", size = 298097, upload-time = "2026-10-17T13:37:03.439Z" },
+]
+
+[[package]]
+name = "typing-extensions"
+version = "4.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz", hash = "sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5", size = 113555, upload-time = "2026-07-02T08:40:05.92Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8", size = 45571, upload-time = "2026-07-02T08:40:04.659Z" },
+]
