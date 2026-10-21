@@ -1,5 +1,5 @@
 [project]
-name = "bitcoin-script-vm"
+name = "bitcoin-sandbox"
 version = "0.1.0"
 dependencies = [
     "btclib"
