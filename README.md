@@ -36,6 +36,18 @@ We are building the core components incrementally, starting from the foundation 
 
 _(Quick start instructions and usage examples coming soon as core modules are finalized.)_
 
+## AI Usage & Philosophy
+
+Every line of code in this repository is written by hand.
+
+The primary motivation behind Bitcoin Sandbox is **deep, uncompromising technical comprehension**. Bitcoin does not strictly need a Python re-implementation, Bitcoin Core remains the gold standard. Instead, building this sandbox from scratch is an exercise in mastering Bitcoin's underlying mechanics. While an AI agent could theoretically generate a project like this, copy-pasting AI-generated code would completely defeat that purpose.
+
+Here is how AI is—and isn't—used in this project:
+
+1. **Codebase Navigation & Explanation:** I use AI as a companion to help read, navigate, and explain complex C++ implementation details and design patterns from Bitcoin Core.
+2. **Design Sparring & Reference Snippets:** AI helps brainstorm architecture alternatives or draft reference Python snippets based on high-level descriptions. However, **I never copy-paste this code directly.** I study it, understand the logic, and hand-write the implementation myself. _(If I didn't write it myself, it's not my code.)_
+3. **Documentation & Writing:** Due to language barriers, AI assists in drafting documentation and text assets like this `README.md`. I provide the requirements, review the drafts, and manually refine the content. If parts of the prose feel a bit too "AI-polished," I appreciate your understanding!
+
 ## References
 
 - [bitcoin/src/script/script.h](https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h)
