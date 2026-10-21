@@ -4,13 +4,13 @@ from pathlib import Path
 from typing_extensions import ClassVar
 
 from main import (
+    AssemblyParser,
+    AssemblyTokenDecimal,
+    AssemblyTokenHex,
+    AssemblyTokenOpcode,
+    AssemblyTokenString,
     Opcode,
     OpcodeAliases,
-    ScriptAssemblyParser,
-    ScriptAssemblyTokenDecimal,
-    ScriptAssemblyTokenHex,
-    ScriptAssemblyTokenOpcode,
-    ScriptAssemblyTokenString,
     ScriptCompiler,
     ScriptNumDecoder,
     ScriptNumEncoder,
@@ -129,103 +129,101 @@ class TestScriptParser(unittest.TestCase):
 
 class TestScriptAssemblyParser(unittest.TestCase):
     def test_tokenize_empty(self):
-        self.assertEqual(ScriptAssemblyParser.tokenize(""), [])
+        self.assertEqual(AssemblyParser.tokenize(""), [])
 
     def test_tokenize_decimal(self):
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("1"),
+            AssemblyParser.tokenize("1"),
             [
-                ScriptAssemblyTokenDecimal(raw_text="1", value=1),
+                AssemblyTokenDecimal(raw_text="1", value=1),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("-1"),
+            AssemblyParser.tokenize("-1"),
             [
-                ScriptAssemblyTokenDecimal(raw_text="-1", value=-1),
+                AssemblyTokenDecimal(raw_text="-1", value=-1),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("+1"),
+            AssemblyParser.tokenize("+1"),
             [
-                ScriptAssemblyTokenDecimal(raw_text="+1", value=1),
+                AssemblyTokenDecimal(raw_text="+1", value=1),
             ],
         )
 
     def test_tokenize_hex(self):
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("0x"),
+            AssemblyParser.tokenize("0x"),
             [
-                ScriptAssemblyTokenHex(raw_text="0x", data=b""),
+                AssemblyTokenHex(raw_text="0x", data=b""),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("0xff"),
+            AssemblyParser.tokenize("0xff"),
             [
-                ScriptAssemblyTokenHex(raw_text="0xff", data=bytes.fromhex("ff")),
+                AssemblyTokenHex(raw_text="0xff", data=bytes.fromhex("ff")),
             ],
         )
 
     def test_tokenize_string(self):
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("'hello world'"),
+            AssemblyParser.tokenize("'hello world'"),
             [
-                ScriptAssemblyTokenString(
-                    raw_text="'hello world'", data=b"hello world"
-                ),
+                AssemblyTokenString(raw_text="'hello world'", data=b"hello world"),
             ],
         )
 
     def test_tokenize_opcode(self):
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("OP_DUP"),
+            AssemblyParser.tokenize("OP_DUP"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="OP_DUP", opcode=Opcode.OP_DUP),
+                AssemblyTokenOpcode(raw_text="OP_DUP", opcode=Opcode.OP_DUP),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("op_dup"),
+            AssemblyParser.tokenize("op_dup"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="op_dup", opcode=Opcode.OP_DUP),
+                AssemblyTokenOpcode(raw_text="op_dup", opcode=Opcode.OP_DUP),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("DUP"),
+            AssemblyParser.tokenize("DUP"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="DUP", opcode=Opcode.OP_DUP),
+                AssemblyTokenOpcode(raw_text="DUP", opcode=Opcode.OP_DUP),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("dup"),
+            AssemblyParser.tokenize("dup"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="dup", opcode=Opcode.OP_DUP),
+                AssemblyTokenOpcode(raw_text="dup", opcode=Opcode.OP_DUP),
             ],
         )
 
     def test_tokenize_opcode_alias(self):
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("OP_TRUE"),
+            AssemblyParser.tokenize("OP_TRUE"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="OP_TRUE", opcode=Opcode.OP_1),
+                AssemblyTokenOpcode(raw_text="OP_TRUE", opcode=Opcode.OP_1),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("OP_FALSE"),
+            AssemblyParser.tokenize("OP_FALSE"),
             [
-                ScriptAssemblyTokenOpcode(raw_text="OP_FALSE", opcode=Opcode.OP_0),
+                AssemblyTokenOpcode(raw_text="OP_FALSE", opcode=Opcode.OP_0),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("OP_NOP2"),
+            AssemblyParser.tokenize("OP_NOP2"),
             [
-                ScriptAssemblyTokenOpcode(
+                AssemblyTokenOpcode(
                     raw_text="OP_NOP2", opcode=Opcode.OP_CHECKLOCKTIMEVERIFY
                 ),
             ],
         )
         self.assertEqual(
-            ScriptAssemblyParser.tokenize("OP_NOP3"),
+            AssemblyParser.tokenize("OP_NOP3"),
             [
-                ScriptAssemblyTokenOpcode(
+                AssemblyTokenOpcode(
                     raw_text="OP_NOP3", opcode=Opcode.OP_CHECKSEQUENCEVERIFY
                 ),
             ],
@@ -233,52 +231,48 @@ class TestScriptAssemblyParser(unittest.TestCase):
 
     def test_tokenize_unknown(self):
         with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_")
+            _ = AssemblyParser.tokenize("OP_")
 
         with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_XXX")
+            _ = AssemblyParser.tokenize("OP_XXX")
 
         with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("XXX")
+            _ = AssemblyParser.tokenize("XXX")
 
     def test_tokenize_opcode_blacklist(self):
         with self.assertRaises(ValueError):
-            _ = ScriptAssemblyParser.tokenize("OP_PUSHDATA_DIRECT")
+            _ = AssemblyParser.tokenize("OP_PUSHDATA_DIRECT")
 
     def test_parse_empty(self):
-        self.assertEqual(ScriptAssemblyParser.parse(""), b"")
-        self.assertEqual(ScriptAssemblyParser.parse("0x"), b"")
-        self.assertEqual(ScriptAssemblyParser.parse("0x 0x"), b"")
+        self.assertEqual(AssemblyParser.parse(""), b"")
+        self.assertEqual(AssemblyParser.parse("0x"), b"")
+        self.assertEqual(AssemblyParser.parse("0x 0x"), b"")
 
     def test_parse_string(self):
-        self.assertEqual(ScriptAssemblyParser.parse("''"), b"\x00")
-        self.assertEqual(ScriptAssemblyParser.parse("'a'"), b"\x01" + b"a")
-        self.assertEqual(ScriptAssemblyParser.parse("'😄'"), b"\x04" + "😄".encode())
+        self.assertEqual(AssemblyParser.parse("''"), b"\x00")
+        self.assertEqual(AssemblyParser.parse("'a'"), b"\x01" + b"a")
+        self.assertEqual(AssemblyParser.parse("'😄'"), b"\x04" + "😄".encode())
 
     def test_parse_decimal(self):
-        self.assertEqual(ScriptAssemblyParser.parse("0"), b"\x00")
+        self.assertEqual(AssemblyParser.parse("0"), b"\x00")
 
     def test_parse_hex(self):
-        self.assertEqual(ScriptAssemblyParser.parse("0x"), b"")
-        self.assertEqual(ScriptAssemblyParser.parse("0x00"), b"\x00")
-        self.assertEqual(ScriptAssemblyParser.parse("0x00 0x01"), b"\x00\x01")
-        self.assertEqual(ScriptAssemblyParser.parse("0x0001"), b"\x00\x01")
+        self.assertEqual(AssemblyParser.parse("0x"), b"")
+        self.assertEqual(AssemblyParser.parse("0x00"), b"\x00")
+        self.assertEqual(AssemblyParser.parse("0x00 0x01"), b"\x00\x01")
+        self.assertEqual(AssemblyParser.parse("0x0001"), b"\x00\x01")
 
     def test_parse_opcode(self):
-        self.assertEqual(
-            ScriptAssemblyParser.parse("OP_DUP"), bytes([Opcode.OP_DUP.value])
-        )
-        self.assertEqual(
-            ScriptAssemblyParser.parse("DUP"), bytes([Opcode.OP_DUP.value])
-        )
+        self.assertEqual(AssemblyParser.parse("OP_DUP"), bytes([Opcode.OP_DUP.value]))
+        self.assertEqual(AssemblyParser.parse("DUP"), bytes([Opcode.OP_DUP.value]))
 
     def test_parse_simple(self):
         self.assertEqual(
-            ScriptAssemblyParser.parse("1 1 OP_ADD"),
+            AssemblyParser.parse("1 1 OP_ADD"),
             b"\x51\x51\x93",
         )
         self.assertEqual(
-            ScriptAssemblyParser.parse("1 1 OP_ADD"),
+            AssemblyParser.parse("1 1 OP_ADD"),
             ScriptCompiler.compile(
                 [
                     ScriptToken(offset=0, opcode=Opcode.OP_1),
@@ -308,7 +302,7 @@ class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
                 script=case.script_sig,
                 comment=case.comments,
             ):
-                compiled_sig = ScriptAssemblyParser.parse(case.script_sig)
+                compiled_sig = AssemblyParser.parse(case.script_sig)
                 self.assertIsInstance(compiled_sig, bytes)
 
             with self.subTest(
@@ -317,7 +311,7 @@ class TestScriptAssemblyParserWithTestCases(unittest.TestCase):
                 script=case.script_pubkey,
                 comment=case.comments,
             ):
-                compiled_pk = ScriptAssemblyParser.parse(case.script_pubkey)
+                compiled_pk = AssemblyParser.parse(case.script_pubkey)
                 self.assertIsInstance(compiled_pk, bytes)
 
 

@@ -434,31 +434,31 @@ class ScriptCompiler:
 
 
 @dataclass(frozen=True)
-class ScriptAssemblyToken:
+class AssemblyToken:
     raw_text: str
 
 
 @dataclass(frozen=True)
-class ScriptAssemblyTokenDecimal(ScriptAssemblyToken):
+class AssemblyTokenDecimal(AssemblyToken):
     value: int
 
 
 @dataclass(frozen=True)
-class ScriptAssemblyTokenHex(ScriptAssemblyToken):
+class AssemblyTokenHex(AssemblyToken):
     data: bytes
 
 
 @dataclass(frozen=True)
-class ScriptAssemblyTokenString(ScriptAssemblyToken):
+class AssemblyTokenString(AssemblyToken):
     data: bytes
 
 
 @dataclass(frozen=True)
-class ScriptAssemblyTokenOpcode(ScriptAssemblyToken):
+class AssemblyTokenOpcode(AssemblyToken):
     opcode: Opcode
 
 
-class ScriptAssemblyParser:
+class AssemblyParser:
     _TOKEN_REGEX: ClassVar[re.Pattern[str]] = re.compile(
         r"""
         (?:
@@ -472,8 +472,8 @@ class ScriptAssemblyParser:
     )
 
     @classmethod
-    def tokenize(cls, assembly: str) -> list[ScriptAssemblyToken]:
-        tokens: list[ScriptAssemblyToken] = []
+    def tokenize(cls, assembly: str) -> list[AssemblyToken]:
+        tokens: list[AssemblyToken] = []
 
         for match in cls._TOKEN_REGEX.finditer(assembly):
             kind = match.lastgroup
@@ -484,7 +484,7 @@ class ScriptAssemblyParser:
                 case "quoted":
                     content = text[1:-1]
                     tokens.append(
-                        ScriptAssemblyTokenString(
+                        AssemblyTokenString(
                             raw_text=text,
                             data=content.encode("utf-8"),
                         )
@@ -501,16 +501,14 @@ class ScriptAssemblyParser:
                     except ValueError:
                         raise ValueError(f"Invalid hex characters in literal: '{text}'")
                     tokens.append(
-                        ScriptAssemblyTokenHex(
+                        AssemblyTokenHex(
                             raw_text=text,
                             data=hex_data,
                         )
                     )
 
                 case "decimal":
-                    tokens.append(
-                        ScriptAssemblyTokenDecimal(raw_text=text, value=int(text))
-                    )
+                    tokens.append(AssemblyTokenDecimal(raw_text=text, value=int(text)))
 
                 case "bare":
                     upper_bare = text.upper()
@@ -525,9 +523,7 @@ class ScriptAssemblyParser:
                             f"Syntax error in script assembly: '{text}' is neither a number, hex data, quoted string, nor valid OP_ code."
                         )
 
-                    tokens.append(
-                        ScriptAssemblyTokenOpcode(raw_text=text, opcode=opcode)
-                    )
+                    tokens.append(AssemblyTokenOpcode(raw_text=text, opcode=opcode))
 
                 case _:
                     raise RuntimeError(f"Unhandled token kind in lexer: {kind}")
@@ -565,13 +561,13 @@ class ScriptAssemblyParser:
 
         for token in tokens:
             match token:
-                case ScriptAssemblyTokenHex(data=raw_data):
+                case AssemblyTokenHex(data=raw_data):
                     writer.write_bytes(raw_data)
 
-                case ScriptAssemblyTokenString(data=raw_data):
+                case AssemblyTokenString(data=raw_data):
                     cls._write_push_data(writer, raw_data)
 
-                case ScriptAssemblyTokenDecimal(value=value):
+                case AssemblyTokenDecimal(value=value):
                     if value == -1:
                         writer.write_byte(Opcode.OP_1NEGATE.value)
                     elif value == 0:
@@ -611,7 +607,7 @@ class ScriptAssemblyParser:
                     else:
                         cls._write_push_data(writer, ScriptNumEncoder.encode(value))
 
-                case ScriptAssemblyTokenOpcode(opcode=opcode):
+                case AssemblyTokenOpcode(opcode=opcode):
                     writer.write_byte(opcode.value)
 
                 case _:
