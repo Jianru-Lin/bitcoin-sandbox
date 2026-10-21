@@ -311,7 +311,7 @@ class ScriptError(IntEnum):
     SCRIPT_ERR_ERROR_COUNT = 55
 
 
-class ScriptToken(NamedTuple):
+class BytecodeToken(NamedTuple):
     offset: int
     opcode: Opcode
     data: bytes | None = None  # only for OP_PUSHDATA
@@ -330,7 +330,7 @@ class BytecodeParser:
     def is_eof(self) -> bool:
         return self._reader.is_eof()
 
-    def next_token(self) -> ScriptToken | None:
+    def next_token(self) -> BytecodeToken | None:
         reader = self._reader
 
         if reader.is_eof():
@@ -341,27 +341,27 @@ class BytecodeParser:
 
         if 0x01 <= byte <= 0x4B:
             data = reader.read_bytes(byte)
-            return ScriptToken(offset, Opcode.OP_PUSHDATA_DIRECT, data)
+            return BytecodeToken(offset, Opcode.OP_PUSHDATA_DIRECT, data)
 
         elif byte == Opcode.OP_PUSHDATA1:
             data_len = reader.read_byte()
             data = reader.read_bytes(data_len)
-            return ScriptToken(offset, Opcode.OP_PUSHDATA1, data)
+            return BytecodeToken(offset, Opcode.OP_PUSHDATA1, data)
 
         elif byte == Opcode.OP_PUSHDATA2:
             data_len = reader.read_uint16_le()
             data = reader.read_bytes(data_len)
-            return ScriptToken(offset, Opcode.OP_PUSHDATA2, data)
+            return BytecodeToken(offset, Opcode.OP_PUSHDATA2, data)
 
         elif byte == Opcode.OP_PUSHDATA4:
             data_len = reader.read_uint32_le()
             data = reader.read_bytes(data_len)
-            return ScriptToken(offset, Opcode.OP_PUSHDATA4, data)
+            return BytecodeToken(offset, Opcode.OP_PUSHDATA4, data)
 
         else:
             try:
                 opcode = Opcode(byte)
-                return ScriptToken(offset, opcode)
+                return BytecodeToken(offset, opcode)
             except ValueError:
                 raise ValueError(
                     f"Unknown opcode byte: 0x{byte:02X} at offset {offset}"
@@ -372,14 +372,14 @@ class BytecodeParser:
             yield token
 
     @staticmethod
-    def parse(raw_script: bytes) -> list[ScriptToken]:
+    def parse(raw_script: bytes) -> list[BytecodeToken]:
         parser = BytecodeParser(raw_script)
         return list(parser)
 
 
 class BytecodeCompiler:
     @staticmethod
-    def compile(tokens: list[ScriptToken]) -> bytes:
+    def compile(tokens: list[BytecodeToken]) -> bytes:
         writer = BytesWriter()
 
         for token in tokens:
@@ -999,7 +999,7 @@ class ScriptContext:
     altstack: ScriptStack
     branch_stack: list[bool]
     state: State
-    current_token: ScriptToken | None
+    current_token: BytecodeToken | None
     codesep_pos: int
 
     tx_ctx: TransactionContext
@@ -2965,7 +2965,7 @@ class ScriptInterpreter:
             self.ctx.state = ScriptContext.Terminated(error=ScriptError.SCRIPT_ERR_OK)
         return self.ctx.state
 
-    def _step(self, token: ScriptToken) -> None:
+    def _step(self, token: BytecodeToken) -> None:
         try:
             opcode = token.opcode
             self.ctx.current_token = token

@@ -9,13 +9,13 @@ from main import (
     AssemblyTokenString,
     BytecodeCompiler,
     BytecodeParser,
+    BytecodeToken,
     Opcode,
     OpcodeAliases,
     ScriptNumDecoder,
     ScriptNumEncoder,
     ScriptStack,
     ScriptTestsLoader,
-    ScriptToken,
     ScriptVerifyFlags,
     ScriptVerifyFlagsParser,
 )
@@ -87,10 +87,10 @@ class TestBytecodeParser(unittest.TestCase):
             ]
         )
         expected = [
-            ScriptToken(0, Opcode.OP_DUP),
-            ScriptToken(1, Opcode.OP_HASH160),
-            ScriptToken(2, Opcode.OP_EQUALVERIFY),
-            ScriptToken(3, Opcode.OP_CHECKSIG),
+            BytecodeToken(0, Opcode.OP_DUP),
+            BytecodeToken(1, Opcode.OP_HASH160),
+            BytecodeToken(2, Opcode.OP_EQUALVERIFY),
+            BytecodeToken(3, Opcode.OP_CHECKSIG),
         ]
         self.assertEqual(BytecodeParser.parse(raw), expected)
 
@@ -98,7 +98,7 @@ class TestBytecodeParser(unittest.TestCase):
         raw_4bytes = b"\x04\xde\xad\xbe\xef"
         self.assertEqual(
             BytecodeParser.parse(raw_4bytes),
-            [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, b"\xde\xad\xbe\xef")],
+            [BytecodeToken(0, Opcode.OP_PUSHDATA_DIRECT, b"\xde\xad\xbe\xef")],
         )
 
         # 75 bytes data
@@ -106,14 +106,14 @@ class TestBytecodeParser(unittest.TestCase):
         raw_75bytes = b"\x4b" + data_75
         self.assertEqual(
             BytecodeParser.parse(raw_75bytes),
-            [ScriptToken(0, Opcode.OP_PUSHDATA_DIRECT, data_75)],
+            [BytecodeToken(0, Opcode.OP_PUSHDATA_DIRECT, data_75)],
         )
 
     def test_pushdata1(self):
         data_80 = b"B" * 80
         raw = b"\x4c\x50" + data_80
         self.assertEqual(
-            BytecodeParser.parse(raw), [ScriptToken(0, Opcode.OP_PUSHDATA1, data_80)]
+            BytecodeParser.parse(raw), [BytecodeToken(0, Opcode.OP_PUSHDATA1, data_80)]
         )
 
     # def test_unknown_opcode_raises_error(self):
@@ -273,9 +273,9 @@ class TestAssemblyParser(unittest.TestCase):
             AssemblyParser.parse("1 1 OP_ADD"),
             BytecodeCompiler.compile(
                 [
-                    ScriptToken(offset=0, opcode=Opcode.OP_1),
-                    ScriptToken(offset=1, opcode=Opcode.OP_1),
-                    ScriptToken(offset=2, opcode=Opcode.OP_ADD),
+                    BytecodeToken(offset=0, opcode=Opcode.OP_1),
+                    BytecodeToken(offset=1, opcode=Opcode.OP_1),
+                    BytecodeToken(offset=2, opcode=Opcode.OP_ADD),
                 ]
             ),
         )
