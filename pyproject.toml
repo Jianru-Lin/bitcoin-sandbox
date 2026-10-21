@@ -1,9 +1,8 @@
 [project]
 name = "bitcoin-sandbox"
 version = "0.1.0"
-dependencies = [
-    "btclib"
-]
+requires-python = ">=3.15"
+dependencies = ["btclib"]
 
 [tool.pyright]
 venvPath = "."
