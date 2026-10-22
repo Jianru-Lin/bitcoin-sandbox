@@ -20,32 +20,19 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "btclib" }]
+requires-dist = [{ name = "btclib", specifier = "==2026.9.13" }]
 
 [[package]]
 name = "btclib"
-version = "2026.10.17"
+version = "2026.9.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bitcoin-core-rpc" },
-    { name = "btclib-ecc" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/63/758179e77dfede5216120a8bfeaa480b3fa8ff3f30600f44f551c66181cc/btclib-2026.10.17.tar.gz", hash = "sha256:f4e334abd94c916b29a10272c24a8364a055b496e17eb749feccd71062c2c75e", size = 7452906, upload-time = "2026-10-17T23:27:57.929Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/a3/9b60a066c0be31087c68ee5c8823074699950ab6fa825ed4ddbfcb19f2fc/btclib-2026.9.13.tar.gz", hash = "sha256:5c9bec875128bf25c3cbafe69f59238cdd555f15ea8c93ae470455e1d58f6aa3", size = 10130030, upload-time = "2026-09-12T23:32:03.263Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/7d/d813f1572019e2cdb6241e946d2364c327b9929c596ba30e27e1d49cd798/btclib-2026.10.17-py3-none-any.whl", hash = "sha256:421f5065e3cac734d56843e00e7bb94ccb129822093e97d4ffbeed8b554b9ea1", size = 443139, upload-time = "2026-10-17T23:27:56.419Z" },
-]
-
-[[package]]
-name = "btclib-ecc"
-version = "2026.10.17"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/56/1c90122d2df7bedfa3bdfc424e027cec839c2fcf756094cdd1dc79dd21c9/btclib_ecc-2026.10.17.tar.gz", hash = "sha256:a1265980826773a0b0c0027eb221c28f4813cdfa9af1bd65d5b822b3330a1a69", size = 2012963, upload-time = "2026-10-17T13:37:05.262Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/45/3b135738c13fc6db649a51b92e2dad660e813b631e4bb1879b425e71dbcf/btclib_ecc-2026.10.17-py3-none-any.whl", hash = "sha256:8821e1482532c1361f03b9d89bcb2c6a490df32a90c1901535c9858dd18dc702", size = 298097, upload-time = "2026-10-17T13:37:03.439Z" },
+    { url = "https://files.pythonhosted.org/packages/74/10/5f13f5f8899bac3db89c8d3c18a378f4ea9dd132d259eca0dede83fac8b2/btclib-2026.9.13-py3-none-any.whl", hash = "sha256:2211010a83bed2776037e7bede8961aeecc365dba432e939fee9c11c694af908", size = 1161618, upload-time = "2026-09-12T23:32:01.163Z" },
 ]
 
 [[package]]
