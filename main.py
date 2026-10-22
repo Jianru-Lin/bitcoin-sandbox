@@ -3090,12 +3090,6 @@ class Bits:
         return cls.decode(bits_bytes)
 
     @classmethod
-    def parse_hex_int_string(cls, bits_hex_int_str: str) -> Bits:
-        value = int(bits_hex_int_str, base=16)
-        bits_bytes = value.to_bytes(4, byteorder="little")
-        return cls.decode(bits_bytes)
-
-    @classmethod
     def parse_int(cls, value: int) -> Bits:
         bits_bytes = value.to_bytes(4, byteorder="little")
         return cls.decode(bits_bytes)
