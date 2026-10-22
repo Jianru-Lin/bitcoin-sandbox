@@ -3092,12 +3092,6 @@ class Bits:
 
 class Miner:
     @staticmethod
-    def target_from_bits(bits: int) -> int:
-        exponent = bits >> 24
-        coefficient = bits & 0xFFFFFF
-        return int(coefficient * (256 ** (exponent - 3)))
-
-    @staticmethod
     def validate(header_without_nonce: bytes, nonce: int, target: int) -> bool:
         header = header_without_nonce + struct.pack("<I", nonce)
         hash_bytes = ScriptCrypto.hash256(header)

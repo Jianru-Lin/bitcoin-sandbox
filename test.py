@@ -599,16 +599,20 @@ class TestBits(unittest.TestCase):
             ),
         )
 
-    def to_target_hex_big_endian(self):
+    def test_to_target_hex_big_endian(self):
         self.assertEqual(
             Bits(coefficient=0x000001, exponent=0x03).to_target_hex_big_endian(),
             "0000000000000000000000000000000000000000000000000000000000000001",
         )
 
-    def to_difficulty(self):
+    def test_to_difficulty(self):
         self.assertEqual(
-            Bits(coefficient=0x00FFFF, exponent=0x1D).to_difficulty(),
+            Bits.decode(bytes.fromhex("ffff001d")).to_difficulty(),
             1,
+        )
+        self.assertEqual(
+            Bits.decode(0x1C2A1115.to_bytes(4, byteorder="little")).to_difficulty(),
+            6.085476906000794,
         )
 
 
