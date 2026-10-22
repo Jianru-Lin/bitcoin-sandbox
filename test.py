@@ -605,6 +605,12 @@ class TestBits(unittest.TestCase):
             "0000000000000000000000000000000000000000000000000000000000000001",
         )
 
+    def to_difficulty(self):
+        self.assertEqual(
+            Bits(coefficient=0x00FFFF, exponent=0x1D).to_difficulty(),
+            1,
+        )
+
 
 class TestMiner(unittest.TestCase):
     pass

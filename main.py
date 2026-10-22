@@ -3068,6 +3068,12 @@ class Bits:
         target = self.to_target()
         return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
 
+    def to_difficulty(self) -> float:
+        # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
+        # nProofOfWorkLimit
+        base = Bits(coefficient=0x00FFFF, exponent=0x1D)  # cls.parse("1d00ffff")
+        return base.to_target() / self.to_target()
+
     @staticmethod
     def decode(bits_bytes: bytes) -> Bits:
         if len(bits_bytes) != 4:
