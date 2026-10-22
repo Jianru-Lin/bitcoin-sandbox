@@ -3052,6 +3052,38 @@ class Peer:
     port: int
 
 
+@dataclass(frozen=True)
+class Bits:
+    exponent: int
+    coefficient: int
+
+    def to_target(self) -> int:
+        return self.coefficient << (8 * (self.exponent - 3))
+
+    def to_target_bytes(self) -> bytes:
+        target = self.to_target()
+        return target.to_bytes(32, byteorder="little")  # raw little-endian bytes
+
+    def to_target_hex_big_endian(self) -> str:
+        target = self.to_target()
+        return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
+
+    @staticmethod
+    def decode(bits_bytes: bytes) -> Bits:
+        if len(bits_bytes) != 4:
+            raise ValueError("Bits string must be exactly 4 bytes")
+        exponent = bits_bytes[3]
+        coefficient = int.from_bytes(bits_bytes[0:3], byteorder="little")
+        return Bits(exponent=exponent, coefficient=coefficient)
+
+    @classmethod
+    def parse(cls, bits_little_endian_str: str) -> Bits:
+        if len(bits_little_endian_str) != 8:
+            raise ValueError("Bits string must be exactly 8 hex characters (4 bytes).")
+        bits_bytes = bytes.fromhex(bits_little_endian_str)
+        return cls.decode(bits_bytes)
+
+
 class Miner:
     @staticmethod
     def target_from_bits(bits: int) -> int:
