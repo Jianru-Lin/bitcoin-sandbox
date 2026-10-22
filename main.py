@@ -3,7 +3,9 @@ import json
 import random
 import re
 import socket
+import struct
 import sys
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -3049,6 +3051,28 @@ class BlockValidator:
 class Peer:
     host: str
     port: int
+
+
+class Miner:
+    @staticmethod
+    def validate(header_without_nonce: bytes, nonce: int, target: int) -> bool:
+        header = header_without_nonce + struct.pack("<I", nonce)
+        hash_bytes = ScriptCrypto.hash256(header)
+        hash_int = int.from_bytes(hash_bytes, byteorder="big")
+        return hash_int < target
+
+    @classmethod
+    def mine(
+        cls,
+        header_without_nonce: bytes,
+        target: int,
+        start_nonce: int = 0,
+        end_nonce: int = 2**32,
+    ) -> int | None:
+        for nonce in range(start_nonce, end_nonce):
+            if cls.validate(header_without_nonce, nonce, target):
+                return nonce
+        return None
 
 
 class DNS:
