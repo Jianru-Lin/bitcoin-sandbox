@@ -586,9 +586,26 @@ class TestBits(unittest.TestCase):
             Bits(coefficient=0x00FFFF, exponent=0x1D),
         )
 
-    def test_parse(self):
+    def test_parse_hex_bytes_string(self):
         self.assertEqual(
-            Bits.parse("ffff001d"), Bits(coefficient=0x00FFFF, exponent=0x1D)
+            Bits.parse_hex_bytes_string("ffff001d"),
+            Bits(coefficient=0x00FFFF, exponent=0x1D),
+        )
+
+    def test_parse_hex_int_string(self):
+        self.assertEqual(
+            Bits.parse_hex_int_string("1d00ffff"),
+            Bits(coefficient=0x00FFFF, exponent=0x1D),
+        )
+        self.assertEqual(
+            Bits.parse_hex_int_string("0x1d00ffff"),
+            Bits(coefficient=0x00FFFF, exponent=0x1D),
+        )
+
+    def test_parse_int(self):
+        self.assertEqual(
+            Bits.parse_int(0x1D00FFFF),
+            Bits(coefficient=0x00FFFF, exponent=0x1D),
         )
 
     def test_to_target_bytes(self):
@@ -611,7 +628,7 @@ class TestBits(unittest.TestCase):
             1,
         )
         self.assertEqual(
-            Bits.decode(0x1C2A1115.to_bytes(4, byteorder="little")).to_difficulty(),
+            Bits.parse_int(0x1C2A1115).to_difficulty(),
             6.085476906000794,
         )
 

@@ -3083,10 +3083,21 @@ class Bits:
         return Bits(exponent=exponent, coefficient=coefficient)
 
     @classmethod
-    def parse(cls, bits_little_endian_str: str) -> Bits:
-        if len(bits_little_endian_str) != 8:
+    def parse_hex_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
+        if len(bits_hex_bytes_str) != 8:
             raise ValueError("Bits string must be exactly 8 hex characters (4 bytes).")
-        bits_bytes = bytes.fromhex(bits_little_endian_str)
+        bits_bytes = bytes.fromhex(bits_hex_bytes_str)
+        return cls.decode(bits_bytes)
+
+    @classmethod
+    def parse_hex_int_string(cls, bits_hex_int_str: str) -> Bits:
+        value = int(bits_hex_int_str, base=16)
+        bits_bytes = value.to_bytes(4, byteorder="little")
+        return cls.decode(bits_bytes)
+
+    @classmethod
+    def parse_int(cls, value: int) -> Bits:
+        bits_bytes = value.to_bytes(4, byteorder="little")
         return cls.decode(bits_bytes)
 
 
