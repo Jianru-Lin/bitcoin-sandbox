@@ -3059,7 +3059,7 @@ class Miner:
         header = header_without_nonce + struct.pack("<I", nonce)
         hash_bytes = ScriptCrypto.hash256(header)
         hash_int = int.from_bytes(hash_bytes, byteorder="big")
-        return hash_int < target
+        return hash_int <= target
 
     @classmethod
     def mine(
