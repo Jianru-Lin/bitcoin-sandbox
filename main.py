@@ -3071,7 +3071,7 @@ class Bits:
     def to_difficulty(self) -> float:
         # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
         # nProofOfWorkLimit
-        base = Bits(coefficient=0x00FFFF, exponent=0x1D)  # cls.parse("1d00ffff")
+        base = Bits(coefficient=0x00FFFF, exponent=0x1D)
         return base.to_target() / self.to_target()
 
     @staticmethod
