@@ -588,7 +588,7 @@ class TestBits(unittest.TestCase):
 
     def test_parse(self):
         self.assertEqual(
-            Bits.parse_hex_bytes_string("ffff001d"),
+            Bits.parse_bytes_string("ffff001d"),
             Bits(coefficient=0x00FFFF, exponent=0x1D),
         )
         self.assertEqual(
@@ -600,9 +600,9 @@ class TestBits(unittest.TestCase):
             Bits(coefficient=0x00FFFF, exponent=0x1D),
         )
 
-    def test_parse_hex_bytes_string(self):
+    def test_parse_bytes_string(self):
         self.assertEqual(
-            Bits.parse_hex_bytes_string("ffff001d"),
+            Bits.parse_bytes_string("ffff001d"),
             Bits(coefficient=0x00FFFF, exponent=0x1D),
         )
 
