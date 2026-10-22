@@ -3098,7 +3098,7 @@ class Bits:
 class Miner:
     @staticmethod
     def validate(header_without_nonce: bytes, nonce: int, target: int) -> bool:
-        header = header_without_nonce + struct.pack("<I", nonce)
+        header = header_without_nonce + nonce.to_bytes(4, "little")
         hash_bytes = ScriptCrypto.hash256(header)
         hash_int = int.from_bytes(hash_bytes, byteorder="little")
         return hash_int <= target
