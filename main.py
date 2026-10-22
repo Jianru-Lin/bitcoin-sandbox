@@ -5,7 +5,6 @@ import re
 import socket
 import struct
 import sys
-import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -441,12 +440,12 @@ class AssemblyToken:
 
 
 @dataclass(frozen=True)
-class AssemblyTokenDecimal(AssemblyToken):
+class AssemblyTokenInteger(AssemblyToken):
     value: int
 
 
 @dataclass(frozen=True)
-class AssemblyTokenHex(AssemblyToken):
+class AssemblyTokenBytes(AssemblyToken):
     data: bytes
 
 
@@ -503,14 +502,14 @@ class AssemblyParser:
                     except ValueError:
                         raise ValueError(f"Invalid hex characters in literal: '{text}'")
                     tokens.append(
-                        AssemblyTokenHex(
+                        AssemblyTokenBytes(
                             raw_text=text,
                             data=hex_data,
                         )
                     )
 
                 case "decimal":
-                    tokens.append(AssemblyTokenDecimal(raw_text=text, value=int(text)))
+                    tokens.append(AssemblyTokenInteger(raw_text=text, value=int(text)))
 
                 case "bare":
                     upper_bare = text.upper()
@@ -563,13 +562,13 @@ class AssemblyParser:
 
         for token in tokens:
             match token:
-                case AssemblyTokenHex(data=raw_data):
+                case AssemblyTokenBytes(data=raw_data):
                     writer.write_bytes(raw_data)
 
                 case AssemblyTokenString(data=raw_data):
                     cls._write_push_data(writer, raw_data)
 
-                case AssemblyTokenDecimal(value=value):
+                case AssemblyTokenInteger(value=value):
                     if value == -1:
                         writer.write_byte(Opcode.OP_1NEGATE.value)
                     elif value == 0:
@@ -3054,6 +3053,12 @@ class Peer:
 
 
 class Miner:
+    @staticmethod
+    def target_from_bits(bits: int) -> int:
+        exponent = bits >> 24
+        coefficient = bits & 0xFFFFFF
+        return int(coefficient * (256 ** (exponent - 3)))
+
     @staticmethod
     def validate(header_without_nonce: bytes, nonce: int, target: int) -> bool:
         header = header_without_nonce + struct.pack("<I", nonce)

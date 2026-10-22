@@ -3,13 +3,14 @@ from pathlib import Path
 
 from main import (
     AssemblyParser,
-    AssemblyTokenDecimal,
-    AssemblyTokenHex,
+    AssemblyTokenBytes,
+    AssemblyTokenInteger,
     AssemblyTokenOpcode,
     AssemblyTokenString,
     BytecodeCompiler,
     BytecodeParser,
     BytecodeToken,
+    Miner,
     Opcode,
     OpcodeAliases,
     ScriptNumDecoder,
@@ -130,37 +131,37 @@ class TestAssemblyParser(unittest.TestCase):
     def test_tokenize_empty(self):
         self.assertEqual(AssemblyParser.tokenize(""), [])
 
-    def test_tokenize_decimal(self):
+    def test_tokenize_integer(self):
         self.assertEqual(
             AssemblyParser.tokenize("1"),
             [
-                AssemblyTokenDecimal(raw_text="1", value=1),
+                AssemblyTokenInteger(raw_text="1", value=1),
             ],
         )
         self.assertEqual(
             AssemblyParser.tokenize("-1"),
             [
-                AssemblyTokenDecimal(raw_text="-1", value=-1),
+                AssemblyTokenInteger(raw_text="-1", value=-1),
             ],
         )
         self.assertEqual(
             AssemblyParser.tokenize("+1"),
             [
-                AssemblyTokenDecimal(raw_text="+1", value=1),
+                AssemblyTokenInteger(raw_text="+1", value=1),
             ],
         )
 
-    def test_tokenize_hex(self):
+    def test_tokenize_bytes(self):
         self.assertEqual(
             AssemblyParser.tokenize("0x"),
             [
-                AssemblyTokenHex(raw_text="0x", data=b""),
+                AssemblyTokenBytes(raw_text="0x", data=b""),
             ],
         )
         self.assertEqual(
             AssemblyParser.tokenize("0xff"),
             [
-                AssemblyTokenHex(raw_text="0xff", data=bytes.fromhex("ff")),
+                AssemblyTokenBytes(raw_text="0xff", data=bytes.fromhex("ff")),
             ],
         )
 
@@ -575,6 +576,28 @@ class TestScriptVerifyFlagsParser(unittest.TestCase):
 class TestScriptTestsLoader(unittest.TestCase):
     def test_load(self):
         _ = ScriptTestsLoader.load(script_tests_json_file_path)
+
+
+class TestMiner(unittest.TestCase):
+    def test_validate(self):
+        GENESIS_HEADER_WITHOUT_NONCE = bytes.fromhex(
+            "01000000"  # Version
+            + "0000000000000000000000000000000000000000000000000000000000000000"  # Prev Block Hash
+            + "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"  # Merkle Root
+            + "29ab5f49"  # Timestamp
+            + "ffff001d"  # Bits
+        )
+        GENESIS_NONCE = 2083236893
+
+        self.assertTrue(
+            Miner.validate(
+                header_without_nonce=GENESIS_HEADER_WITHOUT_NONCE,
+                nonce=GENESIS_NONCE,
+                target=Miner.target_from_bits(
+                    int.from_bytes(bytes.fromhex("ffff001d"), byteorder="little")
+                ),
+            )
+        )
 
 
 if __name__ == "__main__":
