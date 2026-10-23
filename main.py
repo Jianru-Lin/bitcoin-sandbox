@@ -3072,8 +3072,6 @@ class Bits:
         return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
 
     def to_difficulty(self) -> float:
-        # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
-        # nProofOfWorkLimit
         base = self.max()
         return base.to_target() / self.to_target()
 
@@ -3093,9 +3091,15 @@ class Bits:
     @staticmethod
     def decode(bits_bytes: bytes) -> Bits:
         if len(bits_bytes) != 4:
-            raise ValueError("Bits string must be exactly 4 bytes")
+            raise ValueError("Bits must be exactly 4 bytes")
         exponent = bits_bytes[3]
         coefficient = int.from_bytes(bits_bytes[0:3], byteorder="little")
+
+        if coefficient & 0x00800000 != 0:
+            raise ValueError(
+                "Invalid bits: coefficient sign bit is set (negative target)"
+            )
+
         return Bits(exponent=exponent, coefficient=coefficient)
 
     @classmethod
@@ -3113,6 +3117,8 @@ class Bits:
     @classmethod
     def max(cls) -> Bits:
         # mainnet pow limit
+        # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
+        # nProofOfWorkLimit
         return Bits(coefficient=0x00FFFF, exponent=0x1D)
 
 
