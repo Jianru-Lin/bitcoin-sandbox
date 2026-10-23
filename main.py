@@ -3058,7 +3058,10 @@ class Bits:
     coefficient: int
 
     def to_target(self) -> int:
-        return self.coefficient << (8 * (self.exponent - 3))
+        if self.exponent < 3:
+            return self.coefficient >> (8 * (3 - self.exponent))
+        else:
+            return self.coefficient << (8 * (self.exponent - 3))
 
     def to_target_bytes(self) -> bytes:
         target = self.to_target()
@@ -3071,8 +3074,21 @@ class Bits:
     def to_difficulty(self) -> float:
         # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
         # nProofOfWorkLimit
-        base = Bits(coefficient=0x00FFFF, exponent=0x1D)
+        base = self.max()
         return base.to_target() / self.to_target()
+
+    def is_valid(self) -> bool:
+        if not (0 <= self.exponent <= 255):
+            return False
+        if not (0 <= self.coefficient <= 0x007FFFFF):
+            return False
+
+        MAX_256BIT = (1 << 256) - 1
+        target = self.to_target()
+        if not (0 < target <= MAX_256BIT):
+            return False
+
+        return target <= self.max().to_target()
 
     @staticmethod
     def decode(bits_bytes: bytes) -> Bits:
@@ -3093,6 +3109,11 @@ class Bits:
     def parse_int(cls, value: int) -> Bits:
         bits_bytes = value.to_bytes(4, byteorder="little")
         return cls.decode(bits_bytes)
+
+    @classmethod
+    def max(cls) -> Bits:
+        # mainnet pow limit
+        return Bits(coefficient=0x00FFFF, exponent=0x1D)
 
 
 class Miner:
