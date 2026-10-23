@@ -3088,6 +3088,11 @@ class Bits:
 
         return target <= self.max().to_target()
 
+    def encode(self) -> bytes:
+        if not self.is_consensus_valid():
+            raise ValueError("Cannot encode invalid Bits object")
+        return self.coefficient.to_bytes(3, byteorder="little") + bytes([self.exponent])
+
     @staticmethod
     def decode(bits_bytes: bytes) -> Bits:
         if len(bits_bytes) != 4:
