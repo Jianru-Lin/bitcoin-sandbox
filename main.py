@@ -3075,7 +3075,7 @@ class Bits:
         base = self.max()
         return base.to_target() / self.to_target()
 
-    def is_valid(self) -> bool:
+    def is_consensus_valid(self) -> bool:
         if not (0 <= self.exponent <= 255):
             return False
         if not (0 <= self.coefficient <= 0x007FFFFF):
