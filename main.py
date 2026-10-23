@@ -3054,8 +3054,8 @@ class Peer:
 
 @dataclass(frozen=True)
 class Bits:
-    scale: int
     base: int
+    scale: int
 
     def to_target(self) -> int:
         if self.scale < 3:
@@ -3072,8 +3072,8 @@ class Bits:
         return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
 
     def to_difficulty(self) -> float:
-        base = self.max()
-        return base.to_target() / self.to_target()
+        baseline = self.max()
+        return baseline.to_target() / self.to_target()
 
     def is_consensus_valid(self) -> bool:
         if not (0 <= self.scale <= 255):
@@ -3097,15 +3097,13 @@ class Bits:
     def decode(bits_bytes: bytes) -> Bits:
         if len(bits_bytes) != 4:
             raise ValueError("Bits must be exactly 4 bytes")
-        exponent = bits_bytes[3]
-        coefficient = int.from_bytes(bits_bytes[0:3], byteorder="little")
+        scale = bits_bytes[3]
+        base = int.from_bytes(bits_bytes[0:3], byteorder="little")
 
-        if coefficient & 0x00800000 != 0:
-            raise ValueError(
-                "Invalid bits: coefficient sign bit is set (negative target)"
-            )
+        if base & 0x00800000 != 0:
+            raise ValueError("Invalid bits: base sign bit is set (negative target)")
 
-        return Bits(scale=exponent, base=coefficient)
+        return Bits(base=base, scale=scale)
 
     @classmethod
     def parse_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
