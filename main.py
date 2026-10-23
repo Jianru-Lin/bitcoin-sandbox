@@ -3080,7 +3080,7 @@ class Bits:
     def is_encodable(self) -> bool:
         return (0 <= self.scale <= 255) and (0 <= self.base <= 0x007FFFFF)
 
-    def target_fits_uint256(self) -> bool:
+    def is_target_within_uint256_range(self) -> bool:
         MAX_256BIT = (1 << 256) - 1
         return self.is_encodable() and 0 <= self.to_target() <= MAX_256BIT
 
