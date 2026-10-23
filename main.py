@@ -3054,14 +3054,14 @@ class Peer:
 
 @dataclass(frozen=True)
 class Bits:
-    exponent: int
-    coefficient: int
+    scale: int
+    base: int
 
     def to_target(self) -> int:
-        if self.exponent < 3:
-            return self.coefficient >> (8 * (3 - self.exponent))
+        if self.scale < 3:
+            return self.base >> (8 * (3 - self.scale))
         else:
-            return self.coefficient << (8 * (self.exponent - 3))
+            return self.base << (8 * (self.scale - 3))
 
     def to_target_bytes(self) -> bytes:
         target = self.to_target()
@@ -3076,9 +3076,9 @@ class Bits:
         return base.to_target() / self.to_target()
 
     def is_consensus_valid(self) -> bool:
-        if not (0 <= self.exponent <= 255):
+        if not (0 <= self.scale <= 255):
             return False
-        if not (0 <= self.coefficient <= 0x007FFFFF):
+        if not (0 <= self.base <= 0x007FFFFF):
             return False
 
         MAX_256BIT = (1 << 256) - 1
@@ -3091,7 +3091,7 @@ class Bits:
     def encode(self) -> bytes:
         if not self.is_consensus_valid():
             raise ValueError("Cannot encode invalid Bits object")
-        return self.coefficient.to_bytes(3, byteorder="little") + bytes([self.exponent])
+        return self.base.to_bytes(3, byteorder="little") + bytes([self.scale])
 
     @staticmethod
     def decode(bits_bytes: bytes) -> Bits:
@@ -3105,7 +3105,7 @@ class Bits:
                 "Invalid bits: coefficient sign bit is set (negative target)"
             )
 
-        return Bits(exponent=exponent, coefficient=coefficient)
+        return Bits(scale=exponent, base=coefficient)
 
     @classmethod
     def parse_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
@@ -3125,7 +3125,7 @@ class Bits:
         # mainnet pow limit
         # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
         # nProofOfWorkLimit
-        return Bits(coefficient=0x00FFFF, exponent=0x1D)
+        return Bits(base=0x00FFFF, scale=0x1D)
 
 
 class Miner:

@@ -583,34 +583,34 @@ class TestBits(unittest.TestCase):
     def test_decode(self):
         self.assertEqual(
             Bits.decode(bytes.fromhex("ffff001d")),
-            Bits(coefficient=0x00FFFF, exponent=0x1D),
+            Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_parse(self):
         self.assertEqual(
             Bits.parse_bytes_string("ffff001d"),
-            Bits(coefficient=0x00FFFF, exponent=0x1D),
+            Bits(base=0x00FFFF, scale=0x1D),
         )
         self.assertEqual(
             Bits.parse_int(0x1D00FFFF),
-            Bits(coefficient=0x00FFFF, exponent=0x1D),
+            Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_parse_bytes_string(self):
         self.assertEqual(
             Bits.parse_bytes_string("ffff001d"),
-            Bits(coefficient=0x00FFFF, exponent=0x1D),
+            Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_parse_int(self):
         self.assertEqual(
             Bits.parse_int(0x1D00FFFF),
-            Bits(coefficient=0x00FFFF, exponent=0x1D),
+            Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_to_target_bytes(self):
         self.assertEqual(
-            Bits(coefficient=0x000001, exponent=0x03).to_target_bytes(),
+            Bits(base=0x000001, scale=0x03).to_target_bytes(),
             bytes.fromhex(
                 "0100000000000000000000000000000000000000000000000000000000000000"
             ),
@@ -618,7 +618,7 @@ class TestBits(unittest.TestCase):
 
     def test_to_target_hex_big_endian(self):
         self.assertEqual(
-            Bits(coefficient=0x000001, exponent=0x03).to_target_hex_big_endian(),
+            Bits(base=0x000001, scale=0x03).to_target_hex_big_endian(),
             "0000000000000000000000000000000000000000000000000000000000000001",
         )
 
