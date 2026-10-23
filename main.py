@@ -3104,6 +3104,7 @@ class Bits:
 
     @classmethod
     def parse_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
+        # NOTE: Expects little-endian hex bytes (block header format); use parse_int for big-endian RPC hex.
         if len(bits_hex_bytes_str) != 8:
             raise ValueError("Bits string must be exactly 8 hex characters (4 bytes).")
         bits_bytes = bytes.fromhex(bits_hex_bytes_str)
