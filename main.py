@@ -3071,9 +3071,11 @@ class Bits:
         target = self.to_target()
         return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
 
-    def to_difficulty(self) -> float:
-        baseline = self.max()
-        return baseline.to_target() / self.to_target()
+    def to_difficulty(self, reference_target: int) -> float:
+        target = self.to_target()
+        if target == 0:
+            raise ValueError("Difficulty is undefined for zero target")
+        return reference_target / target
 
     def is_consensus_valid(self) -> bool:
         if not (0 <= self.scale <= 255):
@@ -3089,8 +3091,12 @@ class Bits:
         return target <= self.max().to_target()
 
     def encode(self) -> bytes:
-        if not self.is_consensus_valid():
-            raise ValueError("Cannot encode invalid Bits object")
+        if not (0 <= self.scale <= 255):
+            raise ValueError("scale must fit in one byte")
+
+        if not (0 <= self.base <= 0x007FFFFF):
+            raise ValueError("base must fit in 23 bits")
+
         return self.base.to_bytes(3, byteorder="little") + bytes([self.scale])
 
     @staticmethod

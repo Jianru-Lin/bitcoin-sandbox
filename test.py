@@ -623,12 +623,18 @@ class TestBits(unittest.TestCase):
         )
 
     def test_to_difficulty(self):
+        mainnet_genesis_bits = Bits.parse_int(0x1D00FFFF)
+
         self.assertEqual(
-            Bits.decode(bytes.fromhex("ffff001d")).to_difficulty(),
+            Bits.decode(bytes.fromhex("ffff001d")).to_difficulty(
+                reference_target=mainnet_genesis_bits.to_target()
+            ),
             1,
         )
         self.assertEqual(
-            Bits.parse_int(0x1C2A1115).to_difficulty(),
+            Bits.parse_int(0x1C2A1115).to_difficulty(
+                reference_target=mainnet_genesis_bits.to_target()
+            ),
             6.085476906000794,
         )
 
