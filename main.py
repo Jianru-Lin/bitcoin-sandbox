@@ -3072,6 +3072,7 @@ class Bits:
         return target.to_bytes(32, byteorder="big").hex()  # Human read in big-endian
 
     def to_difficulty(self, reference_target: int) -> float:
+        # Negative difficulty values are intentionally allowed; input validation is the caller's responsibility.
         target = self.to_target()
         if target == 0:
             raise ValueError("Difficulty is undefined for zero target")
@@ -3083,6 +3084,11 @@ class Bits:
     def is_target_within_uint256_range(self) -> bool:
         MAX_256BIT = (1 << 256) - 1
         return self.is_encodable() and 0 <= self.to_target() <= MAX_256BIT
+
+    def is_valid_pow_target(self, pow_limit: int) -> bool:
+        return self.is_target_within_uint256_range() and (
+            0 < self.to_target() <= pow_limit
+        )
 
     def encode(self) -> bytes:
         if not self.is_encodable():
