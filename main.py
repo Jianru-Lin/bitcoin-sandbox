@@ -3077,26 +3077,16 @@ class Bits:
             raise ValueError("Difficulty is undefined for zero target")
         return reference_target / target
 
-    def is_consensus_valid(self) -> bool:
-        if not (0 <= self.scale <= 255):
-            return False
-        if not (0 <= self.base <= 0x007FFFFF):
-            return False
+    def is_encodable(self) -> bool:
+        return (0 <= self.scale <= 255) and (0 <= self.base <= 0x007FFFFF)
 
+    def target_fits_uint256(self) -> bool:
         MAX_256BIT = (1 << 256) - 1
-        target = self.to_target()
-        if not (0 < target <= MAX_256BIT):
-            return False
-
-        return target <= self.max().to_target()
+        return self.is_encodable() and 0 <= self.to_target() <= MAX_256BIT
 
     def encode(self) -> bytes:
-        if not (0 <= self.scale <= 255):
-            raise ValueError("scale must fit in one byte")
-
-        if not (0 <= self.base <= 0x007FFFFF):
-            raise ValueError("base must fit in 23 bits")
-
+        if not self.is_encodable():
+            raise ValueError("Bits is not encodable")
         return self.base.to_bytes(3, byteorder="little") + bytes([self.scale])
 
     @staticmethod
@@ -3123,13 +3113,6 @@ class Bits:
     def parse_int(cls, value: int) -> Bits:
         bits_bytes = value.to_bytes(4, byteorder="little")
         return cls.decode(bits_bytes)
-
-    @classmethod
-    def max(cls) -> Bits:
-        # mainnet pow limit
-        # Check here: https://github.com/bitcoin/bitcoin/blob/2034d3078ee1df99cdbfab738b1f2b54c30bd022/src/pow.cpp#L17
-        # nProofOfWorkLimit
-        return Bits(base=0x00FFFF, scale=0x1D)
 
 
 class Miner:
