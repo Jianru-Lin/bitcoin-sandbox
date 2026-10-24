@@ -14,6 +14,7 @@ from main import (
     Miner,
     Opcode,
     OpcodeAliases,
+    ScriptCrypto,
     ScriptNumDecoder,
     ScriptNumEncoder,
     ScriptStack,
@@ -577,6 +578,37 @@ class TestScriptVerifyFlagsParser(unittest.TestCase):
 class TestScriptTestsLoader(unittest.TestCase):
     def test_load(self):
         _ = ScriptTestsLoader.load(script_tests_json_file_path)
+
+
+class TestScriptCrypto(unittest.TestCase):
+    def test_sha1(self):
+        data = b"hello world"
+        expected = bytes.fromhex("2aae6c35c94fcfb415dbe95f408b9ce91ee846ed")
+        self.assertEqual(ScriptCrypto.sha1(data), expected)
+
+    def test_sha256(self):
+        data = b"hello world"
+        expected = bytes.fromhex(
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        )
+        self.assertEqual(ScriptCrypto.sha256(data), expected)
+
+    def test_hash256(self):
+        data = b"hello world"
+        expected = bytes.fromhex(
+            "bc62d4b80d9e36da29c16c5d4d9f11731f36052c72401a76c23c0fb5a9b74423"
+        )
+        self.assertEqual(ScriptCrypto.hash256(data), expected)
+
+    def test_ripemd160(self):
+        data = b"hello world"
+        expected = bytes.fromhex("98c615784ccb5fe5936fbc0cbe9dfdb408d92f0f")
+        self.assertEqual(ScriptCrypto.ripemd160(data), expected)
+
+    def test_hash160(self):
+        data = b"hello world"
+        expected = bytes.fromhex("d7d5ee7824ff93f94c3055af9382c86c68b5ca92")
+        self.assertEqual(ScriptCrypto.hash160(data), expected)
 
 
 class TestBits(unittest.TestCase):
