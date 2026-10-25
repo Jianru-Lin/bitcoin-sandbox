@@ -19,20 +19,20 @@ Unlike production node software, Bitcoin Sandbox packages everything into a sing
 
 We are building the core components incrementally, starting from the foundation up:
 
-1. **Bitcoin Script VM & Compliance:**
+### **Bitcoin Script VM & Compliance:**
 
 - **Current Milestone:** Passing **all** official Bitcoin Core script compliance tests (`script_tests.json`).
 - Implement full validation flags, stack rules, and cryptographic verification checks.
 
-2. **Transaction & Block Validation:**
+### **Transaction & Block Validation:**
 
 - Implementing historic and modern validation rules across Satoshi-era, P2SH (BIP16), SegWit (BIP141/143), and Taproot (BIP340/341/342).
 
-3. **P2P Networking & Node Synchronization:**
+### **P2P Networking & Node Synchronization:**
 
 - Handshaking, inventory management, block downloading, and transaction propagation across Mainnet, Testnet, and custom networks.
 
-4. **RPC Interface & Wallet:**
+### **RPC Interface & Wallet:**
 
 - Exposing standard JSON-RPC endpoints for local development and wallet management (key generation, signing, and broadcasting).
 
