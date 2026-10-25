@@ -3217,6 +3217,8 @@ class Network(ABC):
 
 # Check here https://github.com/bitcoin/bitcoin/blob/bfdcd9797cd1a1345bdaf7ee7ef48f94028262da/src/kernel/chainparams.cpp
 class Mainnet(Network):
+    pow_limit: ClassVar[int] = Bits.parse_int(0x1D00FFFF).to_target()
+
     def __init__(self) -> None:
         super().__init__(
             Network.Config(
