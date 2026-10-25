@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" role="img" aria-labelledby="title desc">
+  <title id="title">Bitcoin Script, from text to stack</title>
+  <desc id="desc">Assembly text is parsed into bytecode, bytecode is parsed into tokens and compiled back, and tokens are evaluated with stack, number, crypto and flag primitives. The toolkit is checked against Bitcoin Core script_tests.json and includes proof-of-work helpers.</desc>
+  <style>
+    text { font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .bg { fill: #ffffff; stroke: #e5e7eb; }
+    .card { fill: #f6f8fa; stroke: #d0d7de; }
+    .panel { fill: #fff8f0; stroke: #fcd9b0; }
+    .code { fill: #ffffff; stroke: #d0d7de; }
+    .ink { fill: #1f2328; }
+    .muted { fill: #59636e; }
+    .accent { fill: #f7931a; }
+    .tag { fill: #d97706; font-weight: 700; font-size: 12px; letter-spacing: 1.2px; }
+    .arrow { stroke: #f7931a; stroke-width: 2; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .card { fill: #161b22; stroke: #30363d; }
+      .panel { fill: #1c1409; stroke: #5a3b12; }
+      .code { fill: #0d1117; stroke: #30363d; }
+      .ink { fill: #e6edf3; }
+      .muted { fill: #9198a1; }
+      .tag { fill: #f7931a; }
+    }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f7931a"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="579" rx="18"/>
+
+  <!-- Title -->
+  <circle cx="52" cy="54" r="10" class="accent"/>
+  <text x="72" y="62" class="ink" font-size="26" font-weight="700">Bitcoin Script, from text to stack</text>
+  <text x="40" y="90" class="muted" font-size="14">Parse assembly · compile bytecode · evaluate on the stack · check proof-of-work</text>
+
+  <!-- 01 Assembly -->
+  <rect class="card" x="40" y="110" width="260" height="160" rx="14"/>
+  <text x="60" y="138" class="tag mono">01 ASSEMBLY</text>
+  <text x="280" y="138" class="muted mono" font-size="11" text-anchor="end">AssemblyParser</text>
+  <rect class="code" x="60" y="152" width="220" height="60" rx="8"/>
+  <text x="170" y="189" class="ink mono" font-size="20" text-anchor="middle">1 1 OP_ADD</text>
+  <text x="60" y="236" class="muted" font-size="12">integers · 0x hex · 'strings'</text>
+  <text x="60" y="254" class="muted" font-size="12">opcodes &amp; aliases like OP_TRUE</text>
+
+  <!-- 02 Bytecode -->
+  <rect class="card" x="350" y="110" width="260" height="160" rx="14"/>
+  <text x="370" y="138" class="tag mono">02 BYTECODE</text>
+  <text x="590" y="138" class="muted mono" font-size="11" text-anchor="end">bytes</text>
+  <rect class="code" x="370" y="152" width="64" height="60" rx="8"/>
+  <rect class="code" x="448" y="152" width="64" height="60" rx="8"/>
+  <rect class="code" x="526" y="152" width="64" height="60" rx="8"/>
+  <text x="402" y="189" class="ink mono" font-size="20" text-anchor="middle">51</text>
+  <text x="480" y="189" class="ink mono" font-size="20" text-anchor="middle">51</text>
+  <text x="558" y="189" class="ink mono" font-size="20" text-anchor="middle">93</text>
+  <text x="370" y="236" class="muted" font-size="12">raw script bytes</text>
+  <text x="370" y="254" class="muted" font-size="12">direct pushes · PUSHDATA1/2/4</text>
+
+  <!-- 03 Tokens -->
+  <rect class="card" x="660" y="110" width="260" height="160" rx="14"/>
+  <text x="680" y="138" class="tag mono">03 TOKENS</text>
+  <text x="900" y="138" class="muted mono" font-size="11" text-anchor="end">BytecodeToken</text>
+  <rect class="code" x="680" y="152" width="220" height="60" rx="8"/>
+  <text x="696" y="173" class="mono" font-size="13"><tspan class="muted">@0 </tspan><tspan class="ink">OP_1</tspan></text>
+  <text x="696" y="189" class="mono" font-size="13"><tspan class="muted">@1 </tspan><tspan class="ink">OP_1</tspan></text>
+  <text x="696" y="205" class="mono" font-size="13"><tspan class="muted">@2 </tspan><tspan class="ink">OP_ADD</tspan></text>
+  <text x="680" y="236" class="muted" font-size="12">offset · opcode · push data</text>
+  <text x="680" y="254" class="muted" font-size="12">inspectable and round-trippable</text>
+
+  <!-- Arrows row 1 -->
+  <line class="arrow" x1="304" y1="186" x2="344" y2="186" marker-end="url(#head)"/>
+  <text x="325" y="176" class="muted" font-size="11" text-anchor="middle">parse</text>
+  <line class="arrow" x1="614" y1="178" x2="654" y2="178" marker-end="url(#head)"/>
+  <line class="arrow" x1="654" y1="196" x2="614" y2="196" marker-end="url(#head)"/>
+  <text x="635" y="168" class="muted" font-size="11" text-anchor="middle">parse</text>
+  <text x="635" y="214" class="muted" font-size="11" text-anchor="middle">compile</text>
+
+  <!-- Down to execution -->
+  <line class="arrow" x1="790" y1="274" x2="790" y2="304" marker-end="url(#head)"/>
+  <text x="800" y="294" class="muted" font-size="11">evaluate</text>
+
+  <!-- 04 Execution primitives -->
+  <rect class="panel" x="40" y="310" width="880" height="130" rx="14"/>
+  <text x="60" y="338" class="tag mono">04 EXECUTION PRIMITIVES</text>
+
+  <rect class="card" x="60" y="352" width="195" height="72" rx="10"/>
+  <text x="76" y="378" class="ink" font-size="14" font-weight="700">ScriptStack</text>
+  <text x="76" y="398" class="muted" font-size="12">push · pop · peek</text>
+  <text x="76" y="414" class="muted" font-size="12">insert_at · remove_at</text>
+  <rect x="219" y="372" width="22" height="9" rx="2" fill="#f7931a"/>
+  <rect x="219" y="384" width="22" height="9" rx="2" fill="#f7931a" opacity="0.6"/>
+  <rect x="219" y="396" width="22" height="9" rx="2" fill="#f7931a" opacity="0.3"/>
+
+  <rect class="card" x="275" y="352" width="195" height="72" rx="10"/>
+  <text x="291" y="378" class="ink" font-size="14" font-weight="700">ScriptNum</text>
+  <text x="291" y="398" class="muted" font-size="12">Encoder / Decoder</text>
+  <text x="291" y="414" class="muted" font-size="12">minimal, sign-magnitude</text>
+
+  <rect class="card" x="490" y="352" width="195" height="72" rx="10"/>
+  <text x="506" y="378" class="ink" font-size="14" font-weight="700">ScriptCrypto</text>
+  <text x="506" y="398" class="muted" font-size="12">sha1 · sha256 · ripemd160</text>
+  <text x="506" y="414" class="muted" font-size="12">hash160 · hash256</text>
+
+  <rect class="card" x="705" y="352" width="195" height="72" rx="10"/>
+  <text x="721" y="378" class="ink" font-size="14" font-weight="700">ScriptVerifyFlags</text>
+  <text x="721" y="398" class="muted" font-size="12">consensus &amp; policy flags</text>
+  <text x="721" y="414" class="muted" font-size="12">parsed from test vectors</text>
+
+  <!-- 05 Conformance -->
+  <rect class="card" x="40" y="466" width="430" height="88" rx="14"/>
+  <text x="60" y="494" class="tag mono">05 CONFORMANCE</text>
+  <text x="60" y="518" class="ink mono" font-size="14">Bitcoin Core script_tests.json</text>
+  <text x="60" y="538" class="muted" font-size="12">loaded by ScriptTestsLoader, every case compiled</text>
+
+  <!-- 06 Proof of work -->
+  <rect class="card" x="490" y="466" width="430" height="88" rx="14"/>
+  <text x="510" y="494" class="tag mono">06 PROOF OF WORK</text>
+  <text x="510" y="518" class="ink mono" font-size="14">Bits 0x1d00ffff → target → difficulty</text>
+  <text x="510" y="538" class="muted" font-size="12">Bits · Miner: compact targets and header hashing</text>
+</svg>

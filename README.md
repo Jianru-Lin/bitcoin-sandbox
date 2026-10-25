@@ -1,5 +1,7 @@
 # Bitcoin Sandbox
 
+![overview](docs/assets/diagram-overview.svg)
+
 **Bitcoin Sandbox** is a lightweight, pure-Python implementation of the Bitcoin protocol designed for education, research, and rapid experimentation.
 
 Unlike production node software, Bitcoin Sandbox packages everything into a single, cohesive codebase. Whether you want to study Bitcoin’s underlying mechanisms, spin up an isolated custom network for teaching, or prototype cutting-edge features (such as alternative signature schemes, new VM opcodes, or AI integrations), this sandbox provides a complete, hackable environment.

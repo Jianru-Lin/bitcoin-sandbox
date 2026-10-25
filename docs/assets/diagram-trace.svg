@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc">
+  <title id="title">Script trace: 1 1 OP_ADD</title>
+  <desc id="desc">The assembly 1 1 OP_ADD compiles to bytes 51 51 93. Executing pushes 1, pushes 1, then adds them, leaving 2 on the stack, so the script evaluates true.</desc>
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    .hdr { fill: #f7931a; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; }
+    .ink { fill: #e6edf3; }
+    .muted { fill: #7d8590; }
+    .cell { fill: #161b22; stroke: #30363d; }
+    .hot { fill: #2a1a06; stroke: #f7931a; }
+    .chip { fill: #161b22; stroke: #30363d; }
+    .arrow { stroke: #f7931a; stroke-width: 2; fill: none; opacity: 0.85; }
+  </style>
+  <defs>
+    <marker id="h" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f7931a"/>
+    </marker>
+  </defs>
+
+  <rect x="0.5" y="0.5" width="959" height="419" rx="16" fill="#0d1117" stroke="#30363d"/>
+  <circle cx="30" cy="28" r="6" fill="#ff5f57"/>
+  <circle cx="50" cy="28" r="6" fill="#febc2e"/>
+  <circle cx="70" cy="28" r="6" fill="#28c840"/>
+  <text x="480" y="33" class="muted" font-size="13" text-anchor="middle">script trace: 1 1 OP_ADD</text>
+  <line x1="0" y1="54" x2="960" y2="54" stroke="#30363d"/>
+
+  <text x="60" y="92" class="hdr">ASSEMBLY</text>
+  <text x="360" y="92" class="hdr">BYTECODE</text>
+  <text x="660" y="92" class="hdr">STACK <tspan class="muted" font-weight="400" letter-spacing="0">(top →)</tspan></text>
+
+  <!-- Row 1 -->
+  <rect class="cell" x="60" y="112" width="200" height="44" rx="8"/>
+  <text x="80" y="140" class="ink" font-size="18">1</text>
+  <line class="arrow" x1="270" y1="134" x2="346" y2="134" marker-end="url(#h)"/>
+  <rect class="cell" x="360" y="112" width="60" height="44" rx="8"/>
+  <text x="390" y="140" class="ink" font-size="18" text-anchor="middle">51</text>
+  <text x="434" y="139" class="muted" font-size="13">OP_1</text>
+  <line class="arrow" x1="520" y1="134" x2="646" y2="134" marker-end="url(#h)"/>
+  <rect class="hot" x="660" y="112" width="60" height="44" rx="8"/>
+  <text x="690" y="140" class="ink" font-size="18" text-anchor="middle">01</text>
+
+  <!-- Row 2 -->
+  <rect class="cell" x="60" y="172" width="200" height="44" rx="8"/>
+  <text x="80" y="200" class="ink" font-size="18">1</text>
+  <line class="arrow" x1="270" y1="194" x2="346" y2="194" marker-end="url(#h)"/>
+  <rect class="cell" x="360" y="172" width="60" height="44" rx="8"/>
+  <text x="390" y="200" class="ink" font-size="18" text-anchor="middle">51</text>
+  <text x="434" y="199" class="muted" font-size="13">OP_1</text>
+  <line class="arrow" x1="520" y1="194" x2="646" y2="194" marker-end="url(#h)"/>
+  <rect class="cell" x="660" y="172" width="60" height="44" rx="8"/>
+  <text x="690" y="200" class="ink" font-size="18" text-anchor="middle">01</text>
+  <rect class="hot" x="730" y="172" width="60" height="44" rx="8"/>
+  <text x="760" y="200" class="ink" font-size="18" text-anchor="middle">01</text>
+
+  <!-- Row 3 -->
+  <rect class="cell" x="60" y="232" width="200" height="44" rx="8"/>
+  <text x="80" y="260" class="ink" font-size="18">OP_ADD</text>
+  <line class="arrow" x1="270" y1="254" x2="346" y2="254" marker-end="url(#h)"/>
+  <rect class="cell" x="360" y="232" width="60" height="44" rx="8"/>
+  <text x="390" y="260" class="ink" font-size="18" text-anchor="middle">93</text>
+  <text x="434" y="259" class="muted" font-size="13">OP_ADD</text>
+  <line class="arrow" x1="520" y1="254" x2="646" y2="254" marker-end="url(#h)"/>
+  <rect class="hot" x="660" y="232" width="60" height="44" rx="8"/>
+  <text x="690" y="260" class="ink" font-size="18" text-anchor="middle">02</text>
+
+  <line x1="40" y1="300" x2="920" y2="300" stroke="#30363d" stroke-dasharray="4 4"/>
+  <text x="60" y="330" font-size="14"><tspan fill="#3fb950">✓</tspan><tspan class="ink"> top of stack is 02 (non-zero), so the script evaluates true</tspan></text>
+
+  <!-- Module chips -->
+  <g font-size="12" text-anchor="middle">
+    <rect class="chip" x="60"  y="356" width="121" height="28" rx="14"/><text class="muted" x="120.5" y="374">AssemblyParser</text>
+    <rect class="chip" x="191" y="356" width="121" height="28" rx="14"/><text class="muted" x="251.5" y="374">BytecodeParser</text>
+    <rect class="chip" x="322" y="356" width="99"  height="28" rx="14"/><text class="muted" x="371.5" y="374">ScriptStack</text>
+    <rect class="chip" x="431" y="356" width="85"  height="28" rx="14"/><text class="muted" x="473.5" y="374">ScriptNum</text>
+    <rect class="chip" x="526" y="356" width="106" height="28" rx="14"/><text class="muted" x="579" y="374">ScriptCrypto</text>
+    <rect class="chip" x="642" y="356" width="142" height="28" rx="14"/><text class="muted" x="713" y="374">ScriptVerifyFlags</text>
+    <rect class="chip" x="794" y="356" width="49"  height="28" rx="14"/><text class="muted" x="818.5" y="374">Bits</text>
+    <rect class="chip" x="853" y="356" width="56"  height="28" rx="14"/><text class="muted" x="881" y="374">Miner</text>
+  </g>
+</svg>
