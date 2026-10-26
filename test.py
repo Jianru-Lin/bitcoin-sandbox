@@ -697,6 +697,26 @@ class TestMiner(unittest.TestCase):
             )
         )
 
+    def test_mine_genesis_block_next(self):
+        genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        genesis_header_bytes = bytes.fromhex(genesis_header_hex)
+        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        mined_nonce = Miner.mine(
+            header_without_nonce=genesis_header.encode_without_nonce(),
+            target=genesis_header.bits.to_target(),
+            start_nonce=2083236800,
+            end_nonce=2083237000,
+        )
+        self.assertIsNotNone(mined_nonce)
+        assert mined_nonce is not None
+        self.assertTrue(
+            Miner.validate(
+                header_without_nonce=genesis_header.encode_without_nonce(),
+                nonce=mined_nonce,
+                target=genesis_header.bits.to_target(),
+            )
+        )
+
 
 class TestBlockHeader(unittest.TestCase):
     def test_decode_genesis_block_header(self):
