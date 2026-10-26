@@ -8,6 +8,7 @@ from main import (
     AssemblyTokenOpcode,
     AssemblyTokenString,
     Bits,
+    BlockHeader,
     BytecodeCompiler,
     BytecodeParser,
     BytecodeToken,
@@ -694,6 +695,24 @@ class TestMiner(unittest.TestCase):
 #                 ),
 #             )
 #         )
+
+
+class TestBlockHeader(unittest.TestCase):
+    def test_decode_genesis_block_header(self):
+        genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        genesis_header_bytes = bytes.fromhex(genesis_header_hex)
+        header = BlockHeader.decode(genesis_header_bytes)
+        self.assertEqual(header.version, 1)
+        self.assertEqual(header.prev_block_hash, b"\x00" * 32)
+        self.assertEqual(
+            header.merkle_root,
+            (
+                0x4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B
+            ).to_bytes(32, byteorder="little"),
+        )
+        self.assertEqual(header.timestamp, 1231006505)
+        self.assertEqual(header.bits, Bits.parse_int(0x1D00FFFF))
+        self.assertEqual(header.nonce, 0x7C2BAC1D)
 
 
 if __name__ == "__main__":
