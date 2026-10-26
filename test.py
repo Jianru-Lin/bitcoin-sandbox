@@ -704,8 +704,8 @@ class TestMiner(unittest.TestCase):
         mined_nonce = Miner.mine(
             header_without_nonce=genesis_header.encode_without_nonce(),
             target=genesis_header.bits.to_target(),
-            start_nonce=2083236800,
-            end_nonce=2083237000,
+            # start_nonce=2083236800,
+            # end_nonce=2083237000,
         )
         self.assertIsNotNone(mined_nonce)
         assert mined_nonce is not None
