@@ -3260,6 +3260,11 @@ class Network(ABC):
 
 # Check here https://github.com/bitcoin/bitcoin/blob/bfdcd9797cd1a1345bdaf7ee7ef48f94028262da/src/kernel/chainparams.cpp
 class Mainnet(Network):
+    genesis_block: ClassVar[BlockHeader] = BlockHeader.decode(
+        bytes.fromhex(
+            "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        )
+    )
     pow_baseline: ClassVar[int] = Bits.parse_int(0x1D00FFFF).to_target()
 
     def __init__(self) -> None:

@@ -673,28 +673,29 @@ class TestBits(unittest.TestCase):
 
 
 class TestMiner(unittest.TestCase):
-    pass
+    def test_validate_genesis_block_header(self):
+        genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        genesis_header_bytes = bytes.fromhex(genesis_header_hex)
+        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        self.assertTrue(
+            Miner.validate(
+                header_without_nonce=genesis_header.encode_without_nonce(),
+                nonce=genesis_header.nonce,
+                target=genesis_header.bits.to_target(),
+            )
+        )
 
-
-#     def test_validate(self):
-#         GENESIS_HEADER_WITHOUT_NONCE = bytes.fromhex(
-#             "01000000"  # Version
-#             + "0000000000000000000000000000000000000000000000000000000000000000"  # Prev Block Hash
-#             + "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"  # Merkle Root
-#             + "29ab5f49"  # Timestamp
-#             + "ffff001d"  # Bits
-#         )
-#         GENESIS_NONCE = 2083236893
-#
-#         self.assertTrue(
-#             Miner.validate(
-#                 header_without_nonce=GENESIS_HEADER_WITHOUT_NONCE,
-#                 nonce=GENESIS_NONCE,
-#                 target=Miner.target_from_bits(
-#                     int.from_bytes(bytes.fromhex("ffff001d"), byteorder="little")
-#                 ),
-#             )
-#         )
+    def test_validate_block_header_1(self):
+        block_header_1_hex = "010000006fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e36299"
+        block_header_1_bytes = bytes.fromhex(block_header_1_hex)
+        block_header_1 = BlockHeader.decode(block_header_1_bytes)
+        self.assertTrue(
+            Miner.validate(
+                header_without_nonce=block_header_1.encode_without_nonce(),
+                nonce=block_header_1.nonce,
+                target=block_header_1.bits.to_target(),
+            )
+        )
 
 
 class TestBlockHeader(unittest.TestCase):
