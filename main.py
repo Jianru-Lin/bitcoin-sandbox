@@ -3143,6 +3143,49 @@ class Miner:
         return None
 
 
+@dataclass(frozen=True)
+class BlockHeader:
+    HEADER_SIZE: ClassVar[int] = 80
+
+    version: int
+    prev_block_hash: bytes
+    merkle_root: bytes
+    timestamp: int
+    bits: Bits
+    nonce: int
+
+    def encode_without_nonce(self) -> bytes:
+        writer = BytesWriter()
+        writer.write_uint32_le(self.version)
+        writer.write_bytes(self.prev_block_hash)
+        writer.write_bytes(self.merkle_root)
+        writer.write_uint32_le(self.timestamp)
+        writer.write_bytes(self.bits.encode())
+        return writer.to_bytes()
+
+    def encode(self) -> bytes:
+        writer = BytesWriter()
+        writer.write_bytes(self.encode_without_nonce())
+        writer.write_uint32_le(self.nonce)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(raw: bytes) -> BlockHeader:
+        if len(raw) != BlockHeader.HEADER_SIZE:
+            raise ValueError(
+                f"Block header must be exactly {BlockHeader.HEADER_SIZE} bytes, got {len(raw)}"
+            )
+        reader = BytesReader(raw)
+        return BlockHeader(
+            version=reader.read_uint32_le(),
+            prev_block_hash=reader.read_bytes(32),
+            merkle_root=reader.read_bytes(32),
+            timestamp=reader.read_uint32_le(),
+            bits=Bits.decode(reader.read_bytes(4)),
+            nonce=reader.read_uint32_le(),
+        )
+
+
 class DNS:
     @staticmethod
     def resolve(host: str) -> list[str]:
@@ -3217,7 +3260,7 @@ class Network(ABC):
 
 # Check here https://github.com/bitcoin/bitcoin/blob/bfdcd9797cd1a1345bdaf7ee7ef48f94028262da/src/kernel/chainparams.cpp
 class Mainnet(Network):
-    pow_limit: ClassVar[int] = Bits.parse_int(0x1D00FFFF).to_target()
+    pow_baseline: ClassVar[int] = Bits.parse_int(0x1D00FFFF).to_target()
 
     def __init__(self) -> None:
         super().__init__(
