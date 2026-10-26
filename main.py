@@ -3108,7 +3108,7 @@ class Bits:
         return Bits(base=base, scale=scale)
 
     @classmethod
-    def parse_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
+    def decode_from_bytes_string(cls, bits_hex_bytes_str: str) -> Bits:
         # NOTE: Expects little-endian hex bytes (block header format); use parse_int for big-endian RPC hex.
         if len(bits_hex_bytes_str) != 8:
             raise ValueError("Bits string must be exactly 8 hex characters (4 bytes).")
@@ -3116,7 +3116,7 @@ class Bits:
         return cls.decode(bits_bytes)
 
     @classmethod
-    def parse_int(cls, value: int) -> Bits:
+    def decode_from_int(cls, value: int) -> Bits:
         bits_bytes = value.to_bytes(4, byteorder="little")
         return cls.decode(bits_bytes)
 
@@ -3265,7 +3265,7 @@ class Mainnet(Network):
             "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         )
     )
-    pow_baseline: ClassVar[int] = Bits.parse_int(0x1D00FFFF).to_target()
+    pow_baseline: ClassVar[int] = Bits.decode_from_int(0x1D00FFFF).to_target()
 
     def __init__(self) -> None:
         super().__init__(

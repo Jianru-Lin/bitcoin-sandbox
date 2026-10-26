@@ -621,23 +621,23 @@ class TestBits(unittest.TestCase):
 
     def test_parse(self):
         self.assertEqual(
-            Bits.parse_bytes_string("ffff001d"),
+            Bits.decode_from_bytes_string("ffff001d"),
             Bits(base=0x00FFFF, scale=0x1D),
         )
         self.assertEqual(
-            Bits.parse_int(0x1D00FFFF),
+            Bits.decode_from_int(0x1D00FFFF),
             Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_parse_bytes_string(self):
         self.assertEqual(
-            Bits.parse_bytes_string("ffff001d"),
+            Bits.decode_from_bytes_string("ffff001d"),
             Bits(base=0x00FFFF, scale=0x1D),
         )
 
     def test_parse_int(self):
         self.assertEqual(
-            Bits.parse_int(0x1D00FFFF),
+            Bits.decode_from_int(0x1D00FFFF),
             Bits(base=0x00FFFF, scale=0x1D),
         )
 
@@ -656,7 +656,7 @@ class TestBits(unittest.TestCase):
         )
 
     def test_to_difficulty(self):
-        mainnet_genesis_bits = Bits.parse_int(0x1D00FFFF)
+        mainnet_genesis_bits = Bits.decode_from_int(0x1D00FFFF)
 
         self.assertEqual(
             Bits.decode(bytes.fromhex("ffff001d")).to_difficulty(
@@ -665,7 +665,7 @@ class TestBits(unittest.TestCase):
             1,
         )
         self.assertEqual(
-            Bits.parse_int(0x1C2A1115).to_difficulty(
+            Bits.decode_from_int(0x1C2A1115).to_difficulty(
                 reference_target=mainnet_genesis_bits.to_target()
             ),
             6.085476906000794,
@@ -732,7 +732,7 @@ class TestBlockHeader(unittest.TestCase):
             ).to_bytes(32, byteorder="little"),
         )
         self.assertEqual(header.timestamp, 1231006505)
-        self.assertEqual(header.bits, Bits.parse_int(0x1D00FFFF))
+        self.assertEqual(header.bits, Bits.decode_from_int(0x1D00FFFF))
         self.assertEqual(header.nonce, 0x7C2BAC1D)
 
 
