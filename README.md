@@ -26,13 +26,13 @@ The roadmap is organized around five main components:
 
 The statuses below reflect the code currently implemented in this repository, not the intended final feature set.
 
-| Component             | Status            | Implemented so far                                                                                                                                                                                                   | Major work remaining                                                                                                                      |
-| --------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Bitcoin Script VM** | In progress       | Script bytecode parser/compiler, assembly parser, stack and `ScriptNum` utilities, many opcode handlers, hashing and signature-verification helpers, verification-flag definitions, and a `script_tests.json` loader | Transaction-aware signature checks, full consensus/flag enforcement, complete transaction validation, and test-suite/chain-history parity |
-| **Miner**             | Basic prototype   | Compact target (`nBits`) utilities, block-header serialization, basic PoW checks, and sequential nonce search                                                                                                        | Complete block construction, difficulty-rule validation, and end-to-end mining on an experimental chain                                   |
-| **P2P**               | Early foundations | Mainnet/Testnet4/Regtest parameters, service-flag definitions, and DNS-seed peer discovery                                                                                                                           | Network connections, protocol messages, block/transaction serialization, synchronization, relay, and encrypted transport                  |
-| **RPC & Storage**     | Planned           | —                                                                                                                                                                                                                    | Persistent block/chainstate storage, indexing, and RPC services                                                                           |
-| **Web Wallet**        | Planned           | —                                                                                                                                                                                                                    | Browser UI, RPC integration, key management, signing, and transaction workflows                                                           |
+| Component             | Status                                       | Implemented so far                                                                                                                                                                                                   | Major work remaining                                                                                                                                            |
+| --------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bitcoin Script VM** | In progress                                  | Script bytecode parser/compiler, assembly parser, stack and `ScriptNum` utilities, many opcode handlers, hashing and signature-verification helpers, verification-flag definitions, and a `script_tests.json` loader | Transaction-aware signature checks, full consensus/flag enforcement, complete transaction validation, and test-suite/chain-history parity                       |
+| **Miner**             | PoW prototype (sequential + multiprocessing) | Compact target (`nBits`) utilities, block-header serialization, PoW checks, sequential nonce search, working multiprocessing miner, and an experimental threading miner                                              | Verify effective parallelism with free-threaded Python, complete block construction, difficulty-rule validation, and end-to-end mining on an experimental chain |
+| **P2P**               | Early foundations                            | Mainnet/Testnet4/Regtest parameters, service-flag definitions, and DNS-seed peer discovery                                                                                                                           | Network connections, protocol messages, block/transaction serialization, synchronization, relay, and encrypted transport                                        |
+| **RPC & Storage**     | Planned                                      | —                                                                                                                                                                                                                    | Persistent block/chainstate storage, indexing, and RPC services                                                                                                 |
+| **Web Wallet**        | Planned                                      | —                                                                                                                                                                                                                    | Browser UI, RPC integration, key management, signing, and transaction workflows                                                                                 |
 
 ## Development Roadmap
 
@@ -68,16 +68,22 @@ The statuses below reflect the code currently implemented in this repository, no
 - [x] Encode/decode the compact difficulty target (`nBits`) and calculate target values.
 - [x] Encode/decode Bitcoin's 80-byte block header.
 - [x] Check a block-header hash against a supplied PoW target.
-- [x] Search a nonce range for a header satisfying a target.
+- [x] Search a nonce range for a header satisfying a target with the sequential `Miner`.
+- [x] Implement `MultiProcessMiner`, splitting the nonce range across worker processes. **Confirmed working in local tests.**
+- [x] Implement an experimental `MultiThreadMiner` with chunked nonce ranges and a shared stop event. **Not yet successfully validated in tests.**
 
 **Next milestones:**
 
+- [ ] Test `MultiThreadMiner` under a free-threaded (GIL-disabled) Python build and verify correctness and parallel speedup.
+- [ ] Benchmark sequential, multithreaded, and multiprocessing mining implementations.
 - [ ] Construct complete candidate blocks, including coinbase transactions and Merkle roots.
 - [ ] Validate difficulty targets and contextual difficulty-adjustment rules.
 - [ ] Implement full block validation, including transactions and consensus limits.
 - [ ] Mine and validate blocks end to end on Regtest or a custom private network.
 
-The current miner is a **basic PoW prototype**, not a complete block-mining subsystem.
+**Parallelism note:** On standard GIL-enabled CPython, threads are not expected to provide effective CPU parallelism for this small-hash mining workload. The multiprocessing implementation uses separate processes and has been tested successfully. The threading version is experimental and needs testing on free-threaded Python; it is not currently a verified speedup.
+
+The current miner supports **PoW verification and nonce searching**, including a working multiprocessing approach, but is not yet a complete block-mining subsystem.
 
 ### 3. P2P Networking & Synchronization
 
