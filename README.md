@@ -14,25 +14,28 @@ The project is an attempt to understand Bitcoin from the inside out by implement
 
 ![overview](docs/assets/diagram-overview.svg)
 
-The roadmap is organized around five main components:
+The roadmap is organized around five main areas, with separately usable subcomponents for networking and RPC:
 
 1. **Bitcoin Script VM** — script execution, transaction validation, and consensus compatibility.
 2. **Miner** — proof-of-work verification and block mining.
-3. **P2P** — Bitcoin protocol messages, peer connections, and blockchain synchronization.
-4. **RPC & Storage** — node services, persistent blockchain data, and efficient queries.
-5. **Web Wallet** — an experimental browser interface connected to the node through RPC.
+3. **P2P** — a shared **P2P Protocol** implementation plus **P2P Server** (inbound connections) and **P2P Client** (outbound connections).
+4. **RPC & Storage** — **RPC Protocol & API**, **RPC Server**, and **RPC Client**, backed by an independently designed **Storage Engine**.
+5. **Web Wallet** — an experimental browser-based wallet that accesses node functions through a controlled RPC integration.
+
+P2P inbound and outbound peers use the same Bitcoin protocol; the server/client distinction is an interface and connection-management choice, **not two different protocols**. Similarly, storage belongs to the node's shared infrastructure rather than to the RPC server alone.
 
 ## Current Development Status
 
 The statuses below reflect the code currently implemented in this repository, not the intended final feature set.
 
-| Component             | Status                                       | Implemented so far                                                                                                                                                                                                   | Major work remaining                                                                                                                                            |
-| --------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Bitcoin Script VM** | In progress                                  | Script bytecode parser/compiler, assembly parser, stack and `ScriptNum` utilities, many opcode handlers, hashing and signature-verification helpers, verification-flag definitions, and a `script_tests.json` loader | Transaction-aware signature checks, full consensus/flag enforcement, complete transaction validation, and test-suite/chain-history parity                       |
-| **Miner**             | PoW prototype (sequential + multiprocessing) | Compact target (`nBits`) utilities, block-header serialization, PoW checks, sequential nonce search, working multiprocessing miner, and an experimental threading miner                                              | Verify effective parallelism with free-threaded Python, complete block construction, difficulty-rule validation, and end-to-end mining on an experimental chain |
-| **P2P**               | Early foundations                            | Mainnet/Testnet4/Regtest parameters, service-flag definitions, and DNS-seed peer discovery                                                                                                                           | Network connections, protocol messages, block/transaction serialization, synchronization, relay, and encrypted transport                                        |
-| **RPC & Storage**     | Planned                                      | —                                                                                                                                                                                                                    | Persistent block/chainstate storage, indexing, and RPC services                                                                                                 |
-| **Web Wallet**        | Planned                                      | —                                                                                                                                                                                                                    | Browser UI, RPC integration, key management, signing, and transaction workflows                                                                                 |
+| Component                                    | Status                                       | Implemented so far                                                                                                                                                                                                   | Major work remaining                                                                                                                                            |
+| -------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bitcoin Script VM**                        | In progress                                  | Script bytecode parser/compiler, assembly parser, stack and `ScriptNum` utilities, many opcode handlers, hashing and signature-verification helpers, verification-flag definitions, and a `script_tests.json` loader | Transaction-aware signature checks, full consensus/flag enforcement, complete transaction validation, and test-suite/chain-history parity                       |
+| **Miner**                                    | PoW prototype (sequential + multiprocessing) | Compact target (`nBits`) utilities, block-header serialization, PoW checks, sequential nonce search, working multiprocessing miner, and an experimental threading miner                                              | Verify effective parallelism with free-threaded Python, complete block construction, difficulty-rule validation, and end-to-end mining on an experimental chain |
+| **P2P Protocol / Server / Client**           | Early foundations                            | Mainnet/Testnet4/Regtest parameters, service-flag definitions, and DNS-seed peer discovery                                                                                                                           | Shared binary message codecs and v1/v2 transport; inbound/outbound connections; peer management, synchronization, and relay                                     |
+| **RPC Protocol & API / Server / Client**     | Planned                                      | —                                                                                                                                                                                                                    | JSON-RPC request/response handling, method dispatch, authenticated HTTP server, and reusable RPC client                                                         |
+| **Storage Engine** _(shared infrastructure)_ | Planned                                      | —                                                                                                                                                                                                                    | Persistent block/chainstate storage, indexing, efficient queries, and reorganization support                                                                    |
+| **Web Wallet**                               | Planned                                      | —                                                                                                                                                                                                                    | Browser UI, RPC integration, key management, signing, and transaction workflows                                                                                 |
 
 ## Development Roadmap
 
@@ -87,38 +90,91 @@ The current miner supports **PoW verification and nonce searching**, including a
 
 ### 3. P2P Networking & Synchronization
 
-**Goal:** communicate with real Bitcoin peers, exchange blocks and transactions, and independently synchronize and validate the chain. The eventual target is interoperability with Mainnet and Testnet4 nodes.
+**Goal:** provide reusable P2P building blocks for protocol experiments while ultimately operating as an interoperable Bitcoin peer that can download, validate, and relay blockchain data on Mainnet and Testnet4.
 
-**Implemented foundations:**
+The public-facing design has three components. **P2P Server** accepts inbound connections; **P2P Client** initiates outbound connections. Both rely on the same protocol codecs, transports, peer-session logic, and message handlers. Once connected, peers can both send and receive application messages regardless of who initiated the connection.
 
-- [x] Define network parameters for Mainnet, Testnet4, and Regtest.
-- [x] Discover candidate peers through DNS seeds, including service-flag-prefixed queries.
-- [x] Define a selection of peer service flags, including the `NODE_P2P_V2` capability bit. Defining this flag does **not** implement v2 transport.
+#### 3.1 P2P Protocol — Encoding, Decoding & Transport
 
-**Next milestones:**
+**Responsibility:** convert typed Bitcoin data and protocol messages to/from their wire representations, without depending on whether a connection is inbound or outbound.
 
-- [ ] Implement serialization and deserialization for full transactions, blocks, and Bitcoin P2P messages.
-- [ ] Establish peer connections and implement version negotiation and handshaking.
-- [ ] Implement peer management, inventory exchange, block/transaction relay, and header/block download.
-- [ ] Implement initial block download, chain selection, reorganization handling, and integration with transaction/block validation.
-- [ ] Support encrypted P2P transport as specified by BIP324.
-- [ ] Synchronize with Mainnet and Testnet4 and operate as an interoperable validating peer.
+- [x] Define network parameters for Mainnet, Testnet4, and Regtest and selected peer service flags. The `NODE_P2P_V2` capability bit is defined, but v2 transport is **not** implemented.
+- [x] Implement reusable byte-reading/writing utilities and 80-byte block-header serialization.
+- [ ] Implement common binary structures such as CompactSize integers, network addresses, transactions, and full blocks.
+- [ ] Encode/decode Bitcoin P2P messages (e.g., `version`, `verack`, `ping`, `pong`, `inv`, `getdata`, `headers`, `block`, and `tx`).
+- [ ] Implement legacy v1 message framing, payload-size handling, and checksum verification.
+- [ ] Implement BIP324 v2 transport as a separate transport implementation, including key exchange, encrypted packet framing, and application-message mapping.
 
-Network discovery is available today; **peer connectivity and blockchain synchronization are not yet implemented**.
+**Design principle:** separate _application-message codecs_ from _transport framing_. In particular, BIP324 is more than an alternative message serializer: it defines an encrypted transport and handshake.
+
+#### 3.2 P2P Server — Inbound Connections
+
+**Responsibility:** make the sandbox node accessible to other Bitcoin peers and to nodes on custom experimental networks.
+
+- [ ] Listen for inbound TCP connections on the configured network.
+- [ ] Accept, negotiate, and maintain peer sessions with connection limits, timeouts, and clean shutdown.
+- [ ] Process incoming peer messages using the shared protocol implementation.
+- [ ] Serve requested headers, blocks, and transactions when data is available and appropriate to relay.
+- [ ] Integrate inbound peers into peer management, chain synchronization, and transaction/block propagation.
+
+**Status:** planned; inbound peer connections have not yet been implemented.
+
+#### 3.3 P2P Client — Outbound Connections
+
+**Responsibility:** connect to Bitcoin peers, discover the network, and obtain and relay blockchain data.
+
+- [x] Discover candidate peers from DNS seeds, including service-flag-prefixed queries.
+- [ ] Establish outgoing TCP connections and complete Bitcoin version handshakes.
+- [ ] Maintain peer connections, handle liveness checks, disconnects, and reconnection.
+- [ ] Exchange inventories, request headers and blocks, and propagate transactions.
+- [ ] Implement initial block download and chain synchronization in cooperation with shared validation and storage services.
+
+**Status:** peer discovery is implemented; outbound peer connections and synchronization are not yet implemented.
+
+**Shared internal infrastructure:** peer sessions, handshake/message dispatch, synchronization coordination, and chain selection should be reusable by both inbound and outbound peers. Chain selection, reorganization, and consensus validation remain node-wide responsibilities rather than features exclusive to the P2P Client.
+
+**Acceptance criteria:** exchange messages with real Bitcoin peers, synchronize and validate chain data independently, handle reorganizations, and participate in Mainnet/Testnet4 as an interoperable validating peer.
 
 ### 4. RPC Interface & Storage Engine
 
-**Goal:** expose comprehensive Bitcoin-node functionality through a JSON-RPC interface, backed by storage designed for efficient validation, synchronization, and queries.
+**Goal:** offer a reusable JSON-RPC API for controlling and inspecting the sandbox node, together with storage designed for persistent validation, synchronization, and efficient queries.
 
-**Planned work:**
+RPC is split into three components. **RPC Protocol & API** defines the method surface and request/response behavior; **RPC Server** hosts it; **RPC Client** calls it. The **Storage Engine** is designed as a separate shared subsystem because P2P, validation, mining, and RPC all need access to blockchain state.
 
-- [ ] Design persistent storage for raw blocks, headers, blockchain metadata, and chainstate/UTXO data.
-- [ ] Build the indexes required for efficient block, transaction, and UTXO queries.
-- [ ] Implement an RPC server and Bitcoin Core-compatible endpoints where practical.
-- [ ] Provide APIs for node status, peer information, blockchain inspection, transaction submission, and mining controls.
-- [ ] Integrate the RPC layer with synchronization, validation, mining, and the web wallet.
+#### 4.1 RPC Protocol & API
 
-**Status:** not yet implemented.
+**Responsibility:** define the JSON-RPC contract and translate method calls into node services without coupling method implementations to HTTP connections.
+
+- [ ] Define request/response and error models, parameter validation, method registration, and dispatch.
+- [ ] Support the JSON-RPC behaviors needed for compatibility with Bitcoin Core, including supported protocol versions and batch requests.
+- [ ] Expose node, blockchain, network, raw-transaction, and mining operations through consistent method interfaces.
+- [ ] Expand toward comprehensive Bitcoin Core-compatible RPC method coverage, documenting any intentionally sandbox-specific methods or differences.
+
+#### 4.2 RPC Server
+
+**Responsibility:** expose RPC methods over HTTP for local tools, automated tests, and authorized applications.
+
+- [ ] Implement an HTTP JSON-RPC endpoint backed by the shared method dispatcher.
+- [ ] Add authentication, access restrictions, request handling, and robust error responses.
+- [ ] Integrate with running P2P, mining, validation, and storage services.
+
+#### 4.3 RPC Client
+
+**Responsibility:** provide a Python API for calling RPC methods, usable independently of the server implementation.
+
+- [ ] Implement HTTP JSON-RPC requests, responses, errors, and authentication handling.
+- [ ] Add convenient wrappers for supported Bitcoin Sandbox and compatible Bitcoin Core methods.
+- [ ] Use the client in tests, scripts, and the backend serving the experimental web wallet.
+
+#### Shared Storage Engine
+
+**Responsibility:** store and retrieve node data efficiently and consistently; this is **not** an implementation detail of the RPC Server.
+
+- [ ] Design persistence for raw blocks, block headers, chain metadata, and UTXO/chainstate data.
+- [ ] Support indexes for efficient queries, validation, and transaction lookup where indexed data is available.
+- [ ] Handle chain updates and reorganizations consistently across P2P, validation, mining, and RPC.
+
+**Status:** the RPC components and persistent storage engine are planned; they are not yet implemented.
 
 ### 5. Web Wallet
 
@@ -126,7 +182,7 @@ Network discovery is available today; **peer connectivity and blockchain synchro
 
 **Planned work:**
 
-- [ ] Build a simple web UI that connects to the sandbox RPC server.
+- [ ] Build a simple web UI that accesses sandbox node services through a controlled RPC backend/gateway, without exposing privileged node RPC credentials in the browser.
 - [ ] Support key generation, address management, and transaction construction and signing.
 - [ ] Display balances and transaction history using node data.
 - [ ] Broadcast transactions and inspect their status.
@@ -159,6 +215,8 @@ AI is used as a learning and writing companion, not as a substitute for implemen
 - [Bitcoin Core — interpreter.h](https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.h)
 - [Bitcoin Core — interpreter.cpp](https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.cpp)
 - [Bitcoin Core — script_tests.json](https://github.com/bitcoin/bitcoin/blob/master/src/test/data/script_tests.json)
+- [Bitcoin P2P Network Reference](https://developer.bitcoin.org/reference/p2p_networking.html)
+- [Bitcoin Core — JSON-RPC Interface](https://github.com/bitcoin/bitcoin/blob/master/doc/JSON-RPC-interface.md)
 - [BIP324 — Version 2 P2P Encrypted Transport Protocol](https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki)
 - [btclib](https://btclib.org/)
 - [A from-scratch tour of Bitcoin in Python](https://karpathy.github.io/2021/06/21/blockchain/)
