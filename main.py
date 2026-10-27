@@ -3219,6 +3219,69 @@ class MultiThreadMiner:
         return None
 
 
+# class MultiProcessMiner:
+#     @staticmethod
+#     def _mine_chunk(
+#         header_without_nonce: bytes,
+#         target: int,
+#         start_nonce: int,
+#         end_nonce: int,
+#         stop_event: SyncEvent,
+#     ) -> int | None:
+#         for nonce in range(start_nonce, end_nonce):
+#             if stop_event.is_set():
+#                 return None
+#             if Miner.validate(
+#                 header_without_nonce=header_without_nonce, nonce=nonce, target=target
+#             ):
+#                 stop_event.set()
+#                 return nonce
+#         return None
+#
+#     @classmethod
+#     def mine(
+#         cls,
+#         header_without_nonce: bytes,
+#         target: int,
+#         start_nonce: int,
+#         end_nonce: int,
+#         num_processes: int,
+#     ) -> int | None:
+#         total_range = end_nonce - start_nonce
+#         if total_range <= 0 or num_processes <= 0:
+#             return None
+#         num_processes = min(num_processes, total_range)
+#         chunk_size = total_range // num_processes
+#
+#         ctx = multiprocessing.get_context()
+#         stop_event = ctx.Event()
+#
+#         with ProcessPoolExecutor(max_workers=num_processes) as executor:
+#             futures: list[Future[int | None]] = []
+#             for i in range(num_processes):
+#                 chunk_start = start_nonce + i * chunk_size
+#                 chunk_end = (
+#                     end_nonce if i == num_processes - 1 else chunk_start + chunk_size
+#                 )
+#                 future = executor.submit(
+#                     cls._mine_chunk,
+#                     header_without_nonce,
+#                     target,
+#                     chunk_start,
+#                     chunk_end,
+#                     stop_event,
+#                 )
+#                 futures.append(future)
+#             for future in as_completed(futures):
+#                 result = future.result()
+#                 if result is not None:
+#                     stop_event.set()
+#                     for f in futures:
+#                         _ = f.cancel()
+#                     return result
+#         return None
+
+
 class MultiProcessMiner:
     @staticmethod
     def _mine_chunk(
@@ -3226,17 +3289,17 @@ class MultiProcessMiner:
         target: int,
         start_nonce: int,
         end_nonce: int,
-        stop_event: SyncEvent,
     ) -> int | None:
         for nonce in range(start_nonce, end_nonce):
-            if stop_event.is_set():
-                return None
             if Miner.validate(
                 header_without_nonce=header_without_nonce, nonce=nonce, target=target
             ):
-                stop_event.set()
                 return nonce
         return None
+
+    @classmethod
+    def _mine_chunk_wrapper(cls, args: tuple[bytes, int, int, int]) -> int | None:
+        return cls._mine_chunk(*args)
 
     @classmethod
     def mine(
@@ -3250,35 +3313,25 @@ class MultiProcessMiner:
         total_range = end_nonce - start_nonce
         if total_range <= 0 or num_processes <= 0:
             return None
+
         num_processes = min(num_processes, total_range)
         chunk_size = total_range // num_processes
 
-        ctx = multiprocessing.get_context()
-        stop_event = ctx.Event()
+        chunks: list[tuple[bytes, int, int, int]] = []
+        for i in range(num_processes):
+            chunk_start = start_nonce + i * chunk_size
+            chunk_end = (
+                end_nonce if i == num_processes - 1 else chunk_start + chunk_size
+            )
+            chunks.append((header_without_nonce, target, chunk_start, chunk_end))
 
-        with ProcessPoolExecutor(max_workers=num_processes) as executor:
-            futures: list[Future[int | None]] = []
-            for i in range(num_processes):
-                chunk_start = start_nonce + i * chunk_size
-                chunk_end = (
-                    end_nonce if i == num_processes - 1 else chunk_start + chunk_size
-                )
-                future = executor.submit(
-                    cls._mine_chunk,
-                    header_without_nonce,
-                    target,
-                    chunk_start,
-                    chunk_end,
-                    stop_event,
-                )
-                futures.append(future)
-            for future in as_completed(futures):
-                result = future.result()
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            for result in pool.imap_unordered(cls._mine_chunk_wrapper, chunks):
                 if result is not None:
-                    stop_event.set()
-                    for f in futures:
-                        _ = f.cancel()
+                    # pool.terminate()
+                    # pool.join()
                     return result
+
         return None
 
 
