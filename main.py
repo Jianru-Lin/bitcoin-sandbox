@@ -3145,6 +3145,13 @@ class Miner:
 
 
 class MultiThreadMiner:
+    """A multi-threaded miner implementation.
+
+    Note: This multi-threading implementation can only achieve true parallelism
+    and be effective when run using a GIL-disabled (free-threaded) version of
+    Python.
+    """
+
     @staticmethod
     def _mine_chunk(
         header_without_nonce: bytes,
