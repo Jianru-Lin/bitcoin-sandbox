@@ -4,8 +4,10 @@ import random
 import re
 import socket
 import sys
+import threading
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from enum import IntEnum, IntFlag
 from pathlib import Path
@@ -3139,6 +3141,67 @@ class Miner:
         for nonce in range(start_nonce, end_nonce):
             if cls.validate(header_without_nonce, nonce, target):
                 return nonce
+        return None
+
+
+class MultiThreadMiner:
+    @staticmethod
+    def _mine_chunk(
+        header_without_nonce: bytes,
+        target: int,
+        start_nonce: int,
+        end_nonce: int,
+        stop_event: threading.Event,
+    ) -> int | None:
+        for nonce in range(start_nonce, end_nonce):
+            if stop_event.is_set():
+                return None
+            if Miner.validate(
+                header_without_nonce=header_without_nonce, nonce=nonce, target=target
+            ):
+                stop_event.set()
+                return nonce
+        return None
+
+    @classmethod
+    def mine(
+        cls,
+        header_without_nonce: bytes,
+        target: int,
+        start_nonce: int,
+        end_nonce: int,
+        num_threads: int,
+    ) -> int | None:
+        total_range = end_nonce - start_nonce
+        if total_range <= 0 or num_threads <= 0:
+            return None
+
+        num_threads = min(num_threads, total_range)
+        chunk_size = total_range // num_threads
+        stop_event = threading.Event()
+
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            futures: list[Future[int | None]] = []
+            for i in range(num_threads):
+                chunk_start = start_nonce + i * chunk_size
+                chunk_end = (
+                    end_nonce if i == num_threads - 1 else chunk_start + chunk_size
+                )
+                future = executor.submit(
+                    cls._mine_chunk,
+                    header_without_nonce,
+                    target,
+                    chunk_start,
+                    chunk_end,
+                    stop_event,
+                )
+                futures.append(future)
+            for future in as_completed(futures):
+                result = future.result()
+                if result is not None:
+                    stop_event.set()
+                    return result
+
         return None
 
 
