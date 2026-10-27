@@ -10,13 +10,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from concurrent.futures import (
     Future,
-    ProcessPoolExecutor,
     ThreadPoolExecutor,
     as_completed,
 )
 from dataclasses import dataclass
 from enum import IntEnum, IntFlag
-from multiprocessing.synchronize import Event as SyncEvent
 from pathlib import Path
 from typing import (
     Annotated,
