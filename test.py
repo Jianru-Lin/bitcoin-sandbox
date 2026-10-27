@@ -863,10 +863,10 @@ class TestMultiProcessMiner(unittest.TestCase):
         mined_nonce = MultiProcessMiner.mine(
             header_without_nonce=genesis_header.encode_without_nonce(),
             target=genesis_header.bits.to_target(),
-            # start_nonce=2083236800,
-            # end_nonce=2083237000,
-            start_nonce=0,
-            end_nonce=2**32,
+            start_nonce=2083236800,
+            end_nonce=2083237000,
+            # start_nonce=0,
+            # end_nonce=2**32,
             num_processes=8,
         )
         self.assertIsNotNone(mined_nonce)
