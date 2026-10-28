@@ -12,6 +12,7 @@ from main import (
     BytecodeCompiler,
     BytecodeParser,
     BytecodeToken,
+    CompactSize,
     Miner,
     MultiProcessMiner,
     MultiThreadMiner,
@@ -896,6 +897,62 @@ class TestBlockHeader(unittest.TestCase):
         self.assertEqual(header.timestamp, 1231006505)
         self.assertEqual(header.bits, Bits.decode_from_int(0x1D00FFFF))
         self.assertEqual(header.nonce, 0x7C2BAC1D)
+
+
+class TestCompactSize(unittest.TestCase):
+    def test_encode_underflow(self):
+        with self.assertRaises(ValueError):
+            _ = CompactSize.encode(-1)
+
+    def test_encode_overflow(self):
+        with self.assertRaises(ValueError):
+            _ = CompactSize.encode(0xFFFF_FFFF_FFFF_FFFF + 1)
+
+    def test_encode(self):
+        self.assertEqual(CompactSize.encode(0), b"\x00")
+        self.assertEqual(CompactSize.encode(1), b"\x01")
+        self.assertEqual(CompactSize.encode(0xFC), b"\xfc")
+        self.assertEqual(CompactSize.encode(0xFD), b"\xfd\xfd\x00")
+        self.assertEqual(CompactSize.encode(0xFFFE), b"\xfd\xfe\xff")
+        self.assertEqual(CompactSize.encode(0xFFFF), b"\xfd\xff\xff")
+        self.assertEqual(CompactSize.encode(0x0001_0000), b"\xfe\x00\x00\x01\x00")
+        self.assertEqual(CompactSize.encode(0xFFFF_FFFE), b"\xfe\xfe\xff\xff\xff")
+        self.assertEqual(CompactSize.encode(0xFFFF_FFFF), b"\xfe\xff\xff\xff\xff")
+        self.assertEqual(
+            CompactSize.encode(0x0000_0001_0000_0000),
+            b"\xff\x00\x00\x00\x00\x01\x00\x00\x00",
+        )
+        self.assertEqual(
+            CompactSize.encode(0xFFFF_FFFF_FFFF_FFFE),
+            b"\xff\xfe\xff\xff\xff\xff\xff\xff\xff",
+        )
+        self.assertEqual(
+            CompactSize.encode(0xFFFF_FFFF_FFFF_FFFF),
+            b"\xff\xff\xff\xff\xff\xff\xff\xff\xff",
+        )
+
+    def test_decode(self):
+        self.assertEqual(CompactSize.decode(b"\x00"), 0)
+        self.assertEqual(CompactSize.decode(b"\x01"), 1)
+        self.assertEqual(CompactSize.decode(b"\xfc"), 0xFC)
+        self.assertEqual(CompactSize.decode(b"\xfd\xfd\x00"), 0xFD)
+        self.assertEqual(CompactSize.decode(b"\xfd\xfe\xff"), 0xFFFE)
+        self.assertEqual(CompactSize.decode(b"\xfd\xff\xff"), 0xFFFF)
+        self.assertEqual(CompactSize.decode(b"\xfe\x00\x00\x01\x00"), 0x0001_0000)
+        self.assertEqual(CompactSize.decode(b"\xfe\xfe\xff\xff\xff"), 0xFFFF_FFFE)
+        self.assertEqual(CompactSize.decode(b"\xfe\xff\xff\xff\xff"), 0xFFFF_FFFF)
+        self.assertEqual(
+            CompactSize.decode(b"\xff\x00\x00\x00\x00\x01\x00\x00\x00"),
+            0x0000_0001_0000_0000,
+        )
+        self.assertEqual(
+            CompactSize.decode(b"\xff\xfe\xff\xff\xff\xff\xff\xff\xff"),
+            0xFFFF_FFFF_FFFF_FFFE,
+        )
+        self.assertEqual(
+            CompactSize.decode(b"\xff\xff\xff\xff\xff\xff\xff\xff\xff"),
+            0xFFFF_FFFF_FFFF_FFFF,
+        )
 
 
 if __name__ == "__main__":
