@@ -44,6 +44,14 @@ class BytesReader:
     def pc(self) -> int:
         return self._pc
 
+    @property
+    def length(self) -> int:
+        return self._length
+
+    @property
+    def remaining(self) -> int:
+        return max(0, self._length - self._pc)
+
     def is_eof(self) -> bool:
         return self._pc >= self._length
 
@@ -3321,6 +3329,58 @@ class BlockHeader:
             )
         reader = BytesReader(raw)
         return cls._decode(reader)
+
+
+class CompactSize:
+    @staticmethod
+    def _encode(value: int, writer: BytesWriter):
+        if value < 0:
+            raise ValueError(f"CompactSize cannot be negative: {value}")
+        if value < 0xFD:
+            writer.write_byte(value)
+        elif value <= 0xFFFF:
+            writer.write_byte(0xFD)
+            writer.write_uint16_le(value)
+        elif value <= 0xFFFF_FFFF:
+            writer.write_byte(0xFE)
+            writer.write_uint32_le(value)
+        elif value <= 0xFFFF_FFFF_FFFF_FFFF:
+            writer.write_byte(0xFF)
+            writer.write_bytes(value.to_bytes(8, byteorder="little"))
+        else:
+            raise ValueError(
+                f"CompactSize exceeds maximum 64-bit integer range: {value}"
+            )
+
+    @classmethod
+    def encode(cls, value: int) -> bytes:
+        writer = BytesWriter()
+        cls._encode(value, writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def _decode(reader: BytesReader) -> int:
+        first_byte = reader.read_byte()
+        if first_byte < 0xFD:
+            return first_byte
+        elif first_byte == 0xFD:
+            return reader.read_uint16_le()
+        elif first_byte == 0xFE:
+            return reader.read_uint32_le()
+        elif first_byte == 0xFF:
+            return int.from_bytes(reader.read_bytes(8), byteorder="little")
+        else:
+            raise ValueError(f"Unexpected CompactSize prefix byte: 0x{first_byte:02X}")
+
+    @classmethod
+    def decode(cls, raw: bytes) -> int:
+        reader = BytesReader(raw)
+        value = cls._decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding CompactSize {value}"
+            )
+        return value
 
 
 class DNS:
