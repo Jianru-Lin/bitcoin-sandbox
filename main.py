@@ -3281,8 +3281,7 @@ class BlockHeader:
     bits: Bits
     nonce: int
 
-    def encode_without_nonce(self) -> bytes:
-        writer = BytesWriter()
+    def _encode_without_nonce(self, writer: BytesWriter) -> bytes:
         writer.write_uint32_le(self.version)
         writer.write_bytes(self.prev_block_hash)
         writer.write_bytes(self.merkle_root)
@@ -3290,19 +3289,21 @@ class BlockHeader:
         writer.write_bytes(self.bits.encode())
         return writer.to_bytes()
 
-    def encode(self) -> bytes:
+    def encode_without_nonce(self) -> bytes:
         writer = BytesWriter()
+        return self._encode_without_nonce(writer)
+
+    def _encode(self, writer: BytesWriter) -> bytes:
         writer.write_bytes(self.encode_without_nonce())
         writer.write_uint32_le(self.nonce)
         return writer.to_bytes()
 
+    def encode(self) -> bytes:
+        writer = BytesWriter()
+        return self._encode(writer)
+
     @staticmethod
-    def decode(raw: bytes) -> BlockHeader:
-        if len(raw) != BlockHeader.HEADER_SIZE:
-            raise ValueError(
-                f"Block header must be exactly {BlockHeader.HEADER_SIZE} bytes, got {len(raw)}"
-            )
-        reader = BytesReader(raw)
+    def _decode(reader: BytesReader) -> BlockHeader:
         return BlockHeader(
             version=reader.read_uint32_le(),
             prev_block_hash=reader.read_bytes(32),
@@ -3311,6 +3312,15 @@ class BlockHeader:
             bits=Bits.decode(reader.read_bytes(4)),
             nonce=reader.read_uint32_le(),
         )
+
+    @classmethod
+    def decode(cls, raw: bytes) -> BlockHeader:
+        if len(raw) != BlockHeader.HEADER_SIZE:
+            raise ValueError(
+                f"Block header must be exactly {BlockHeader.HEADER_SIZE} bytes, got {len(raw)}"
+            )
+        reader = BytesReader(raw)
+        return cls._decode(reader)
 
 
 class DNS:
