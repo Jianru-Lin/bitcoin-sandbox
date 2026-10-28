@@ -79,6 +79,9 @@ class BytesReader:
     def read_uint32_le(self) -> int:
         return int.from_bytes(self.read_bytes(4), byteorder="little")
 
+    def read_uint64_le(self) -> int:
+        return int.from_bytes(self.read_bytes(8), byteorder="little")
+
 
 class BytesWriter:
     _buf: bytearray
@@ -96,13 +99,20 @@ class BytesWriter:
 
     def write_uint16_le(self, value: int) -> None:
         if not (0 <= value <= 0xFFFF):
-            raise ValueError(f"Uint16 out of range (0~65535): {value}")
+            raise ValueError(f"Uint16 out of range (0~{0xFFFF}): {value}")
         self._buf.extend(value.to_bytes(2, byteorder="little"))
 
     def write_uint32_le(self, value: int) -> None:
-        if not (0 <= value <= 0xFFFFFFFF):
-            raise ValueError(f"Uint32 out of range (0~4294967295): {value}")
+        if not (0 <= value <= 0xFFFF_FFFF):
+            raise ValueError(f"Uint32 out of range (0~{0xFFFF_FFFF}): {value}")
         self._buf.extend(value.to_bytes(4, byteorder="little"))
+
+    def write_uint64_le(self, value: int) -> None:
+        if not (0 <= value <= 0xFFFF_FFFF_FFFF_FFFF):
+            raise ValueError(
+                f"Uint64 out of range (0~{0xFFFF_FFFF_FFFF_FFFF}): {value}"
+            )
+        self._buf.extend(value.to_bytes(8, byteorder="little"))
 
     def to_bytes(self) -> bytes:
         return bytes(self._buf)
@@ -3346,7 +3356,7 @@ class CompactSize:
             writer.write_uint32_le(value)
         elif value <= 0xFFFF_FFFF_FFFF_FFFF:
             writer.write_byte(0xFF)
-            writer.write_bytes(value.to_bytes(8, byteorder="little"))
+            writer.write_uint64_le(value)
         else:
             raise ValueError(
                 f"CompactSize exceeds maximum 64-bit integer range: {value}"
@@ -3368,7 +3378,7 @@ class CompactSize:
         elif first_byte == 0xFE:
             return reader.read_uint32_le()
         elif first_byte == 0xFF:
-            return int.from_bytes(reader.read_bytes(8), byteorder="little")
+            return reader.read_uint64_le()
         else:
             raise ValueError(f"Unexpected CompactSize prefix byte: 0x{first_byte:02X}")
 
