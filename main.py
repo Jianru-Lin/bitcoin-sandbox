@@ -3311,14 +3311,14 @@ class BlockHeader:
         writer = BytesWriter()
         return self.encode_without_nonce(writer)
 
-    def encode(self, writer: BytesWriter) -> bytes:
+    def encode(self, writer: BytesWriter) -> None:
         writer.write_bytes(self.encode_without_nonce_to_bytes())
         writer.write_uint32_le(self.nonce)
-        return writer.to_bytes()
 
     def encode_to_bytes(self) -> bytes:
         writer = BytesWriter()
-        return self.encode(writer)
+        self.encode(writer)
+        return writer.to_bytes()
 
     @staticmethod
     def decode(reader: BytesReader) -> BlockHeader:
@@ -3565,6 +3565,37 @@ class BlockBody:
                 f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding BlockBody"
             )
         return body
+
+
+@dataclass(frozen=True)
+class Block:
+    header: BlockHeader
+    body: BlockBody
+
+    def encode(self, writer: BytesWriter) -> None:
+        self.header.encode(writer)
+        self.body.encode(writer)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> Block:
+        header = BlockHeader.decode(reader)
+        body = BlockBody.decode(reader)
+        return Block(header=header, body=body)
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> Block:
+        reader = BytesReader(raw)
+        block = Block.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Block"
+            )
+        return block
 
 
 class DNS:
