@@ -679,10 +679,10 @@ class TestMiner(unittest.TestCase):
     def test_validate_genesis_block_header(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=genesis_header.nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -691,10 +691,10 @@ class TestMiner(unittest.TestCase):
     def test_validate_block_header_1(self):
         block_header_1_hex = "010000006fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e36299"
         block_header_1_bytes = bytes.fromhex(block_header_1_hex)
-        block_header_1 = BlockHeader.decode(block_header_1_bytes)
+        block_header_1 = BlockHeader.decode_from_bytes(block_header_1_bytes)
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=block_header_1.encode_without_nonce(),
+                header_without_nonce=block_header_1.encode_without_nonce_to_bytes(),
                 nonce=block_header_1.nonce,
                 target=block_header_1.bits.to_target(),
             )
@@ -703,9 +703,9 @@ class TestMiner(unittest.TestCase):
     def test_mine_genesis_block_next(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = Miner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -714,7 +714,7 @@ class TestMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -725,9 +725,9 @@ class TestMultiThreadMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_threads_0(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiThreadMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -738,9 +738,9 @@ class TestMultiThreadMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_threads_1(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiThreadMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -750,7 +750,7 @@ class TestMultiThreadMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -759,9 +759,9 @@ class TestMultiThreadMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_threads_2(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiThreadMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -771,7 +771,7 @@ class TestMultiThreadMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -805,9 +805,9 @@ class TestMultiProcessMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_processes_0(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiProcessMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -818,9 +818,9 @@ class TestMultiProcessMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_processes_1(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiProcessMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -830,7 +830,7 @@ class TestMultiProcessMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -839,9 +839,9 @@ class TestMultiProcessMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_processes_2(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiProcessMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -851,7 +851,7 @@ class TestMultiProcessMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -860,9 +860,9 @@ class TestMultiProcessMiner(unittest.TestCase):
     def test_mine_genesis_block_next_num_processes_8(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        genesis_header = BlockHeader.decode(genesis_header_bytes)
+        genesis_header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         mined_nonce = MultiProcessMiner.mine(
-            header_without_nonce=genesis_header.encode_without_nonce(),
+            header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
             target=genesis_header.bits.to_target(),
             start_nonce=2083236800,
             end_nonce=2083237000,
@@ -874,7 +874,7 @@ class TestMultiProcessMiner(unittest.TestCase):
         assert mined_nonce is not None
         self.assertTrue(
             Miner.validate(
-                header_without_nonce=genesis_header.encode_without_nonce(),
+                header_without_nonce=genesis_header.encode_without_nonce_to_bytes(),
                 nonce=mined_nonce,
                 target=genesis_header.bits.to_target(),
             )
@@ -885,7 +885,7 @@ class TestBlockHeader(unittest.TestCase):
     def test_decode_genesis_block_header(self):
         genesis_header_hex = "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         genesis_header_bytes = bytes.fromhex(genesis_header_hex)
-        header = BlockHeader.decode(genesis_header_bytes)
+        header = BlockHeader.decode_from_bytes(genesis_header_bytes)
         self.assertEqual(header.version, 1)
         self.assertEqual(header.prev_block_hash, b"\x00" * 32)
         self.assertEqual(
@@ -902,55 +902,67 @@ class TestBlockHeader(unittest.TestCase):
 class TestCompactSize(unittest.TestCase):
     def test_encode_underflow(self):
         with self.assertRaises(ValueError):
-            _ = CompactSize.encode(-1)
+            _ = CompactSize.encode_to_bytes(-1)
 
     def test_encode_overflow(self):
         with self.assertRaises(ValueError):
-            _ = CompactSize.encode(0xFFFF_FFFF_FFFF_FFFF + 1)
+            _ = CompactSize.encode_to_bytes(0xFFFF_FFFF_FFFF_FFFF + 1)
 
     def test_encode(self):
-        self.assertEqual(CompactSize.encode(0), b"\x00")
-        self.assertEqual(CompactSize.encode(1), b"\x01")
-        self.assertEqual(CompactSize.encode(0xFC), b"\xfc")
-        self.assertEqual(CompactSize.encode(0xFD), b"\xfd\xfd\x00")
-        self.assertEqual(CompactSize.encode(0xFFFE), b"\xfd\xfe\xff")
-        self.assertEqual(CompactSize.encode(0xFFFF), b"\xfd\xff\xff")
-        self.assertEqual(CompactSize.encode(0x0001_0000), b"\xfe\x00\x00\x01\x00")
-        self.assertEqual(CompactSize.encode(0xFFFF_FFFE), b"\xfe\xfe\xff\xff\xff")
-        self.assertEqual(CompactSize.encode(0xFFFF_FFFF), b"\xfe\xff\xff\xff\xff")
+        self.assertEqual(CompactSize.encode_to_bytes(0), b"\x00")
+        self.assertEqual(CompactSize.encode_to_bytes(1), b"\x01")
+        self.assertEqual(CompactSize.encode_to_bytes(0xFC), b"\xfc")
+        self.assertEqual(CompactSize.encode_to_bytes(0xFD), b"\xfd\xfd\x00")
+        self.assertEqual(CompactSize.encode_to_bytes(0xFFFE), b"\xfd\xfe\xff")
+        self.assertEqual(CompactSize.encode_to_bytes(0xFFFF), b"\xfd\xff\xff")
         self.assertEqual(
-            CompactSize.encode(0x0000_0001_0000_0000),
+            CompactSize.encode_to_bytes(0x0001_0000), b"\xfe\x00\x00\x01\x00"
+        )
+        self.assertEqual(
+            CompactSize.encode_to_bytes(0xFFFF_FFFE), b"\xfe\xfe\xff\xff\xff"
+        )
+        self.assertEqual(
+            CompactSize.encode_to_bytes(0xFFFF_FFFF), b"\xfe\xff\xff\xff\xff"
+        )
+        self.assertEqual(
+            CompactSize.encode_to_bytes(0x0000_0001_0000_0000),
             b"\xff\x00\x00\x00\x00\x01\x00\x00\x00",
         )
         self.assertEqual(
-            CompactSize.encode(0xFFFF_FFFF_FFFF_FFFE),
+            CompactSize.encode_to_bytes(0xFFFF_FFFF_FFFF_FFFE),
             b"\xff\xfe\xff\xff\xff\xff\xff\xff\xff",
         )
         self.assertEqual(
-            CompactSize.encode(0xFFFF_FFFF_FFFF_FFFF),
+            CompactSize.encode_to_bytes(0xFFFF_FFFF_FFFF_FFFF),
             b"\xff\xff\xff\xff\xff\xff\xff\xff\xff",
         )
 
     def test_decode(self):
-        self.assertEqual(CompactSize.decode(b"\x00"), 0)
-        self.assertEqual(CompactSize.decode(b"\x01"), 1)
-        self.assertEqual(CompactSize.decode(b"\xfc"), 0xFC)
-        self.assertEqual(CompactSize.decode(b"\xfd\xfd\x00"), 0xFD)
-        self.assertEqual(CompactSize.decode(b"\xfd\xfe\xff"), 0xFFFE)
-        self.assertEqual(CompactSize.decode(b"\xfd\xff\xff"), 0xFFFF)
-        self.assertEqual(CompactSize.decode(b"\xfe\x00\x00\x01\x00"), 0x0001_0000)
-        self.assertEqual(CompactSize.decode(b"\xfe\xfe\xff\xff\xff"), 0xFFFF_FFFE)
-        self.assertEqual(CompactSize.decode(b"\xfe\xff\xff\xff\xff"), 0xFFFF_FFFF)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\x00"), 0)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\x01"), 1)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\xfc"), 0xFC)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\xfd\xfd\x00"), 0xFD)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\xfd\xfe\xff"), 0xFFFE)
+        self.assertEqual(CompactSize.decode_from_bytes(b"\xfd\xff\xff"), 0xFFFF)
         self.assertEqual(
-            CompactSize.decode(b"\xff\x00\x00\x00\x00\x01\x00\x00\x00"),
+            CompactSize.decode_from_bytes(b"\xfe\x00\x00\x01\x00"), 0x0001_0000
+        )
+        self.assertEqual(
+            CompactSize.decode_from_bytes(b"\xfe\xfe\xff\xff\xff"), 0xFFFF_FFFE
+        )
+        self.assertEqual(
+            CompactSize.decode_from_bytes(b"\xfe\xff\xff\xff\xff"), 0xFFFF_FFFF
+        )
+        self.assertEqual(
+            CompactSize.decode_from_bytes(b"\xff\x00\x00\x00\x00\x01\x00\x00\x00"),
             0x0000_0001_0000_0000,
         )
         self.assertEqual(
-            CompactSize.decode(b"\xff\xfe\xff\xff\xff\xff\xff\xff\xff"),
+            CompactSize.decode_from_bytes(b"\xff\xfe\xff\xff\xff\xff\xff\xff\xff"),
             0xFFFF_FFFF_FFFF_FFFE,
         )
         self.assertEqual(
-            CompactSize.decode(b"\xff\xff\xff\xff\xff\xff\xff\xff\xff"),
+            CompactSize.decode_from_bytes(b"\xff\xff\xff\xff\xff\xff\xff\xff\xff"),
             0xFFFF_FFFF_FFFF_FFFF,
         )
 

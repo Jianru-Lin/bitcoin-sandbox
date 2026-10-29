@@ -3299,7 +3299,7 @@ class BlockHeader:
     bits: Bits
     nonce: int
 
-    def _encode_without_nonce(self, writer: BytesWriter) -> bytes:
+    def encode_without_nonce(self, writer: BytesWriter) -> bytes:
         writer.write_uint32_le(self.version)
         writer.write_bytes(self.prev_block_hash)
         writer.write_bytes(self.merkle_root)
@@ -3307,21 +3307,21 @@ class BlockHeader:
         writer.write_bytes(self.bits.encode())
         return writer.to_bytes()
 
-    def encode_without_nonce(self) -> bytes:
+    def encode_without_nonce_to_bytes(self) -> bytes:
         writer = BytesWriter()
-        return self._encode_without_nonce(writer)
+        return self.encode_without_nonce(writer)
 
-    def _encode(self, writer: BytesWriter) -> bytes:
-        writer.write_bytes(self.encode_without_nonce())
+    def encode(self, writer: BytesWriter) -> bytes:
+        writer.write_bytes(self.encode_without_nonce_to_bytes())
         writer.write_uint32_le(self.nonce)
         return writer.to_bytes()
 
-    def encode(self) -> bytes:
+    def encode_to_bytes(self) -> bytes:
         writer = BytesWriter()
-        return self._encode(writer)
+        return self.encode(writer)
 
     @staticmethod
-    def _decode(reader: BytesReader) -> BlockHeader:
+    def decode(reader: BytesReader) -> BlockHeader:
         return BlockHeader(
             version=reader.read_uint32_le(),
             prev_block_hash=reader.read_bytes(32),
@@ -3332,18 +3332,18 @@ class BlockHeader:
         )
 
     @classmethod
-    def decode(cls, raw: bytes) -> BlockHeader:
+    def decode_from_bytes(cls, raw: bytes) -> BlockHeader:
         if len(raw) != BlockHeader.HEADER_SIZE:
             raise ValueError(
                 f"Block header must be exactly {BlockHeader.HEADER_SIZE} bytes, got {len(raw)}"
             )
         reader = BytesReader(raw)
-        return cls._decode(reader)
+        return cls.decode(reader)
 
 
 class CompactSize:
     @staticmethod
-    def _encode(value: int, writer: BytesWriter):
+    def encode(value: int, writer: BytesWriter):
         if value < 0:
             raise ValueError(f"CompactSize cannot be negative: {value}")
         if value < 0xFD:
@@ -3363,13 +3363,13 @@ class CompactSize:
             )
 
     @classmethod
-    def encode(cls, value: int) -> bytes:
+    def encode_to_bytes(cls, value: int) -> bytes:
         writer = BytesWriter()
-        cls._encode(value, writer)
+        cls.encode(value, writer)
         return writer.to_bytes()
 
     @staticmethod
-    def _decode(reader: BytesReader) -> int:
+    def decode(reader: BytesReader) -> int:
         first_byte = reader.read_byte()
         if first_byte < 0xFD:
             return first_byte
@@ -3383,14 +3383,35 @@ class CompactSize:
             raise ValueError(f"Unexpected CompactSize prefix byte: 0x{first_byte:02X}")
 
     @classmethod
-    def decode(cls, raw: bytes) -> int:
+    def decode_from_bytes(cls, raw: bytes) -> int:
         reader = BytesReader(raw)
-        value = cls._decode(reader)
+        value = cls.decode(reader)
         if not reader.is_eof():
             raise ValueError(
                 f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding CompactSize {value}"
             )
         return value
+
+
+@dataclass(frozen=True)
+class Transaction:
+    def encode(self, writer: BytesWriter) -> None:
+        raise NotImplementedError("TODO")
+
+    @classmethod
+    def decode(cls, reader: BytesReader) -> Transaction:
+        raise NotImplementedError("TODO")
+
+
+@dataclass(frozen=True)
+class BlockBody:
+    transactions: list[Transaction]
+
+    @classmethod
+    def decode(cls, reader: BytesReader) -> BlockBody:
+        tx_count = CompactSize.decode(reader)
+        transactions = [Transaction.decode(reader) for _ in range(tx_count)]
+        return BlockBody(transactions=transactions)
 
 
 class DNS:
@@ -3467,7 +3488,7 @@ class Network(ABC):
 
 # Check here https://github.com/bitcoin/bitcoin/blob/bfdcd9797cd1a1345bdaf7ee7ef48f94028262da/src/kernel/chainparams.cpp
 class Mainnet(Network):
-    genesis_block: ClassVar[BlockHeader] = BlockHeader.decode(
+    genesis_block: ClassVar[BlockHeader] = BlockHeader.decode_from_bytes(
         bytes.fromhex(
             "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
         )
