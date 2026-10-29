@@ -3394,24 +3394,177 @@ class CompactSize:
 
 
 @dataclass(frozen=True)
-class Transaction:
-    def encode(self, writer: BytesWriter) -> None:
-        raise NotImplementedError("TODO")
+class OutPoint:
+    txid: bytes
+    index: int
 
-    @classmethod
-    def decode(cls, reader: BytesReader) -> Transaction:
-        raise NotImplementedError("TODO")
+    def encode(self, writer: BytesWriter) -> None:
+        if len(self.txid) != 32:
+            raise ValueError(f"Txid must be exactly 32 bytes, got {len(self.txid)}")
+        writer.write_bytes(self.txid)
+        writer.write_uint32_le(self.index)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> OutPoint:
+        return OutPoint(txid=reader.read_bytes(32), index=reader.read_uint32_le())
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> OutPoint:
+        reader = BytesReader(raw)
+        body = OutPoint.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding OutPoint"
+            )
+        return body
+
+
+@dataclass(frozen=True)
+class TxIn:
+    prevout: OutPoint
+    script_sig: bytes
+    sequence: int
+
+    def encode(self, writer: BytesWriter) -> None:
+        self.prevout.encode(writer)
+        CompactSize.encode(len(self.script_sig), writer)
+        writer.write_bytes(self.script_sig)
+        writer.write_uint32_le(self.sequence)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> TxIn:
+        prevout = OutPoint.decode(reader)
+        script_sig_len = CompactSize.decode(reader)
+        script_sig = reader.read_bytes(script_sig_len)
+        sequence = reader.read_uint32_le()
+        return TxIn(prevout=prevout, script_sig=script_sig, sequence=sequence)
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> TxIn:
+        reader = BytesReader(raw)
+        body = TxIn.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding TxIn"
+            )
+        return body
+
+
+@dataclass(frozen=True)
+class TxOut:
+    value: int
+    script_pubkey: bytes
+
+    def encode(self, writer: BytesWriter) -> None:
+        writer.write_uint64_le(self.value)
+        CompactSize.encode(len(self.script_pubkey), writer)
+        writer.write_bytes(self.script_pubkey)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> TxOut:
+        value = reader.read_uint64_le()
+        script_pubkey_len = CompactSize.decode(reader)
+        script_pubkey = reader.read_bytes(script_pubkey_len)
+        return TxOut(value=value, script_pubkey=script_pubkey)
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> TxOut:
+        reader = BytesReader(raw)
+        body = TxOut.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding TxOut"
+            )
+        return body
+
+
+@dataclass(frozen=True)
+class Transaction:
+    version: int
+    vin: list[TxIn]
+    vout: list[TxOut]
+    lock_time: int
+
+    def encode(self, writer: BytesWriter) -> None:
+        writer.write_uint32_le(self.version)
+        CompactSize.encode(len(self.vin), writer)
+        for txin in self.vin:
+            txin.encode(writer)
+        CompactSize.encode(len(self.vout), writer)
+        for txout in self.vout:
+            txout.encode(writer)
+        writer.write_uint32_le(self.lock_time)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> Transaction:
+        version = reader.read_uint32_le()
+        vin_count = CompactSize.decode(reader)
+        vin = [TxIn.decode(reader) for _ in range(vin_count)]
+        vout_count = CompactSize.decode(reader)
+        vout = [TxOut.decode(reader) for _ in range(vout_count)]
+        lock_time = reader.read_uint32_le()
+        return Transaction(version=version, vin=vin, vout=vout, lock_time=lock_time)
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> Transaction:
+        reader = BytesReader(raw)
+        body = Transaction.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Transaction"
+            )
+        return body
 
 
 @dataclass(frozen=True)
 class BlockBody:
     transactions: list[Transaction]
 
-    @classmethod
-    def decode(cls, reader: BytesReader) -> BlockBody:
+    def encode(self, writer: BytesWriter) -> None:
+        CompactSize.encode(len(self.transactions), writer)
+        for tx in self.transactions:
+            tx.encode(writer)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: BytesReader) -> BlockBody:
         tx_count = CompactSize.decode(reader)
         transactions = [Transaction.decode(reader) for _ in range(tx_count)]
         return BlockBody(transactions=transactions)
+
+    @staticmethod
+    def decode_from_bytes(raw: bytes) -> BlockBody:
+        reader = BytesReader(raw)
+        body = BlockBody.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding BlockBody"
+            )
+        return body
 
 
 class DNS:
