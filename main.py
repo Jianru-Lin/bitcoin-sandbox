@@ -3619,10 +3619,15 @@ class TcpConnection:
     def status(self) -> Status:
         return self._status
 
-    def send(self, data: bytes) -> None:
+    def write_byte(self, value: int) -> None:
+        if not (0 <= value <= 0xFF):
+            raise ValueError(f"Byte value out of range (0~255): {value}")
+        self.write_bytes(value.to_bytes(1))
+
+    def write_bytes(self, data: bytes) -> None:
         if self._status != TcpConnection.Status.CONNECTED:
             raise TcpConnection.Error(
-                f"Cannot send data, connection status is: {self._status.value}"
+                f"Cannot write data, connection status is: {self._status.value}"
             )
         try:
             self._socket.sendall(data)
@@ -3630,10 +3635,30 @@ class TcpConnection:
             self._status = TcpConnection.Status.DISCONNECTED
             raise TcpConnection.Error(f"Connection lost while sending data: {e}") from e
 
-    def receive(self, n: int) -> bytes:
+    def write_uint16_le(self, value: int) -> None:
+        if not (0 <= value <= 0xFFFF):
+            raise ValueError(f"Uint16 out of range (0~{0xFFFF}): {value}")
+        self.write_bytes(value.to_bytes(2, byteorder="little"))
+
+    def write_uint32_le(self, value: int) -> None:
+        if not (0 <= value <= 0xFFFF_FFFF):
+            raise ValueError(f"Uint32 out of range (0~{0xFFFF_FFFF}): {value}")
+        self.write_bytes(value.to_bytes(4, byteorder="little"))
+
+    def write_uint64_le(self, value: int) -> None:
+        if not (0 <= value <= 0xFFFF_FFFF_FFFF_FFFF):
+            raise ValueError(
+                f"Uint64 out of range (0~{0xFFFF_FFFF_FFFF_FFFF}): {value}"
+            )
+        self.write_bytes(value.to_bytes(8, byteorder="little"))
+
+    def read_byte(self) -> int:
+        return self.read_bytes(1)[0]
+
+    def read_bytes(self, n: int) -> bytes:
         if self._status != TcpConnection.Status.CONNECTED:
             raise TcpConnection.Error(
-                f"Cannot receive data, connection status is: {self._status.value}"
+                f"Cannot read data, connection status is: {self._status.value}"
             )
         try:
             data = self._socket.recv(n)
@@ -3646,6 +3671,15 @@ class TcpConnection:
             raise TcpConnection.Error(
                 f"Connection lost while receiving data: {e}"
             ) from e
+
+    def read_uint16_le(self) -> int:
+        return int.from_bytes(self.read_bytes(2), byteorder="little")
+
+    def read_uint32_le(self) -> int:
+        return int.from_bytes(self.read_bytes(4), byteorder="little")
+
+    def read_uint64_le(self) -> int:
+        return int.from_bytes(self.read_bytes(8), byteorder="little")
 
     def close(self) -> None:
         if self._status == TcpConnection.Status.CONNECTED:
