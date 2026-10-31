@@ -3631,7 +3631,7 @@ class TcpConnection:
             )
         try:
             self._socket.sendall(data)
-        except (BrokenPipeError, ConnectionResetError, OSError) as e:
+        except OSError as e:
             self._status = TcpConnection.Status.DISCONNECTED
             raise TcpConnection.Error(f"Connection lost while sending data: {e}") from e
 
@@ -3656,6 +3656,8 @@ class TcpConnection:
         return self.read_bytes(1)[0]
 
     def read_bytes(self, n: int) -> bytes:
+        if n < 0:
+            raise ValueError(f"Byte count must be non-negative: {n}")
         if self._status != TcpConnection.Status.CONNECTED:
             raise TcpConnection.Error(
                 f"Cannot read data, connection status is: {self._status.value}"
@@ -3668,7 +3670,7 @@ class TcpConnection:
                     self._status = TcpConnection.Status.DISCONNECTED
                     raise TcpConnection.Error("Peer closed the connection gracefully.")
                 buffer.extend(chunk)
-            except (ConnectionResetError, OSError) as e:
+            except OSError as e:
                 self._status = TcpConnection.Status.DISCONNECTED
                 raise TcpConnection.Error(
                     f"Connection lost while receiving data: {e}"
@@ -3685,14 +3687,15 @@ class TcpConnection:
         return int.from_bytes(self.read_bytes(8), byteorder="little")
 
     def close(self) -> None:
-        if self._status == TcpConnection.Status.CONNECTED:
-            self._status = TcpConnection.Status.CLOSED
-            try:
-                self._socket.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
-            finally:
-                self._socket.close()
+        if self._status == TcpConnection.Status.CLOSED:
+            return
+        self._status = TcpConnection.Status.CLOSED
+        try:
+            self._socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        finally:
+            self._socket.close()
 
     def __enter__(self) -> Self:
         return self
@@ -3708,9 +3711,10 @@ class TcpConnection:
     @staticmethod
     def connect(host: str, port: int, timeout: float = 10.0) -> TcpConnection:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
         try:
+            sock.settimeout(timeout)
             sock.connect((host, port))
+            sock.settimeout(None)
         except Exception as e:
             sock.close()
             raise TcpConnection.Error(f"Failed to connect to {host}:{port}: {e}") from e
@@ -3733,9 +3737,11 @@ class TcpServer:
             try:
                 temp = self._server_socket.accept()
                 client_socket = temp[0]
-                yield TcpConnection(client_socket)
-            except OSError:
-                break
+            except OSError as e:
+                if not self._is_running:
+                    break
+                raise TcpServer.Error(f"Failed to accept connection: {e}") from e
+            yield TcpConnection(client_socket)
 
     def close(self) -> None:
         if self._is_running:
@@ -3759,8 +3765,8 @@ class TcpServer:
     @staticmethod
     def bind(host: str, port: int, backlog: int = 128) -> TcpServer:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((host, port))
             sock.listen(backlog)
         except Exception as e:
