@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from sys import byteorder
 
 from main import (
     AssemblyParser,
@@ -912,6 +913,7 @@ class TestBlockBody(unittest.TestCase):
         )
         body = BlockBody.decode_from_bytes(genesis_block_body_bytes)
         self.assertEqual(body.encode_to_bytes(), genesis_block_body_bytes)
+        self.assertEqual(len(body.transactions), 1)
 
 
 class TestCompactSize(unittest.TestCase):
@@ -982,6 +984,78 @@ class TestCompactSize(unittest.TestCase):
         )
 
 
+class TestOutPoint(unittest.TestCase):
+    def test_decode(self):
+        outpoint_bytes = bytes.fromhex(
+            "0000000000000000000000000000000000000000000000000000000000000000ffffffff"
+        )
+        outpoint = OutPoint.decode_from_bytes(outpoint_bytes)
+        self.assertEqual(outpoint.encode_to_bytes(), outpoint_bytes)
+        self.assertEqual(outpoint.index, 0xFFFFFFFF)
+        self.assertEqual(
+            outpoint.txid,
+            bytes.fromhex(
+                "0000000000000000000000000000000000000000000000000000000000000000"
+            ),
+        )
+
+
+class TestTxIn(unittest.TestCase):
+    def test_decode(self):
+        txin_bytes = bytes.fromhex(
+            "0000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff"
+        )
+        txin = TxIn.decode_from_bytes(txin_bytes)
+        self.assertEqual(txin.encode_to_bytes(), txin_bytes)
+        self.assertEqual(txin.prevout.index, 0xFFFFFFFF)
+        self.assertEqual(
+            txin.prevout.txid,
+            bytes.fromhex(
+                "0000000000000000000000000000000000000000000000000000000000000000"
+            ),
+        )
+        self.assertEqual(
+            txin.script_sig,
+            bytes.fromhex(
+                "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"
+            ),
+        )
+        self.assertEqual(txin.sequence, 0xFFFFFFFF)
+
+
+class TestTxOut(unittest.TestCase):
+    def test_decode(self):
+        txout_bytes = bytes.fromhex(
+            "00f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+        )
+        txout = TxOut.decode_from_bytes(txout_bytes)
+        self.assertEqual(txout.encode_to_bytes(), txout_bytes)
+        self.assertEqual(txout.value, 5_000_000_000)
+        self.assertEqual(
+            txout.value,
+            int.from_bytes(bytes.fromhex("00f2052a01000000"), byteorder="little"),
+        )
+        self.assertEqual(
+            txout.script_pubkey,
+            bytes.fromhex(
+                "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+            ),
+        )
+
+
+class TestTransaction(unittest.TestCase):
+    def test_decode_genesis_block_coinbase_transaction(self):
+        transaction_bytes = bytes.fromhex(
+            "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+        )
+        transaction = Transaction.decode_from_bytes(transaction_bytes)
+        self.assertEqual(transaction.encode_to_bytes(), transaction_bytes)
+        self.assertEqual(transaction.version, 1)
+        self.assertEqual(len(transaction.vin), 1)
+        self.assertEqual(len(transaction.vout), 1)
+        self.assertEqual(transaction.lock_time, 0)
+
+
 class TestBlock(unittest.TestCase):
     def test_decode_genesis_block(self):
         genesis_block_bytes = bytes.fromhex(
@@ -989,6 +1063,7 @@ class TestBlock(unittest.TestCase):
         )
         block = Block.decode_from_bytes(genesis_block_bytes)
         self.assertEqual(block.encode_to_bytes(), genesis_block_bytes)
+        self.assertEqual(len(block.body.transactions), 1)
 
 
 if __name__ == "__main__":
