@@ -3680,7 +3680,9 @@ class TcpConnection:
             sock.connect((host, port))
         except Exception as e:
             sock.close()
-            raise ConnectionError(f"Failed to connect to {host}:{port}: {e}") from e
+            raise TcpConnection.ConnectionError(
+                f"Failed to connect to {host}:{port}: {e}"
+            ) from e
         return TcpConnection(sock)
 
 
