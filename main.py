@@ -3600,7 +3600,7 @@ class Block:
 
 
 class TcpConnection:
-    class ConnectionError(Exception):
+    class Error(Exception):
         pass
 
     class Status(Enum):
@@ -3621,33 +3621,29 @@ class TcpConnection:
 
     def send(self, data: bytes) -> None:
         if self._status != TcpConnection.Status.CONNECTED:
-            raise TcpConnection.ConnectionError(
+            raise TcpConnection.Error(
                 f"Cannot send data, connection status is: {self._status.value}"
             )
         try:
             self._socket.sendall(data)
         except (BrokenPipeError, ConnectionResetError, OSError) as e:
             self._status = TcpConnection.Status.DISCONNECTED
-            raise TcpConnection.ConnectionError(
-                f"Connection lost while sending data: {e}"
-            ) from e
+            raise TcpConnection.Error(f"Connection lost while sending data: {e}") from e
 
     def receive(self, n: int) -> bytes:
         if self._status != TcpConnection.Status.CONNECTED:
-            raise TcpConnection.ConnectionError(
+            raise TcpConnection.Error(
                 f"Cannot receive data, connection status is: {self._status.value}"
             )
         try:
             data = self._socket.recv(n)
             if not data:
                 self._status = TcpConnection.Status.DISCONNECTED
-                raise TcpConnection.ConnectionError(
-                    "Peer closed the connection gracefully."
-                )
+                raise TcpConnection.Error("Peer closed the connection gracefully.")
             return data
         except (ConnectionResetError, OSError) as e:
             self._status = TcpConnection.Status.DISCONNECTED
-            raise TcpConnection.ConnectionError(
+            raise TcpConnection.Error(
                 f"Connection lost while receiving data: {e}"
             ) from e
 
@@ -3680,9 +3676,7 @@ class TcpConnection:
             sock.connect((host, port))
         except Exception as e:
             sock.close()
-            raise TcpConnection.ConnectionError(
-                f"Failed to connect to {host}:{port}: {e}"
-            ) from e
+            raise TcpConnection.Error(f"Failed to connect to {host}:{port}: {e}") from e
         return TcpConnection(sock)
 
 
