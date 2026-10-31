@@ -3660,17 +3660,20 @@ class TcpConnection:
             raise TcpConnection.Error(
                 f"Cannot read data, connection status is: {self._status.value}"
             )
-        try:
-            data = self._socket.recv(n)
-            if not data:
+        buffer = bytearray()
+        while len(buffer) < n:
+            try:
+                chunk = self._socket.recv(n - len(buffer))
+                if not chunk:
+                    self._status = TcpConnection.Status.DISCONNECTED
+                    raise TcpConnection.Error("Peer closed the connection gracefully.")
+                buffer.extend(chunk)
+            except (ConnectionResetError, OSError) as e:
                 self._status = TcpConnection.Status.DISCONNECTED
-                raise TcpConnection.Error("Peer closed the connection gracefully.")
-            return data
-        except (ConnectionResetError, OSError) as e:
-            self._status = TcpConnection.Status.DISCONNECTED
-            raise TcpConnection.Error(
-                f"Connection lost while receiving data: {e}"
-            ) from e
+                raise TcpConnection.Error(
+                    f"Connection lost while receiving data: {e}"
+                ) from e
+        return bytes(buffer)
 
     def read_uint16_le(self) -> int:
         return int.from_bytes(self.read_bytes(2), byteorder="little")
