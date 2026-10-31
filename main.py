@@ -3621,29 +3621,35 @@ class TcpConnection:
 
     def send(self, data: bytes) -> None:
         if self._status != TcpConnection.Status.CONNECTED:
-            raise ConnectionError(
+            raise TcpConnection.ConnectionError(
                 f"Cannot send data, connection status is: {self._status.value}"
             )
         try:
             self._socket.sendall(data)
         except (BrokenPipeError, ConnectionResetError, OSError) as e:
             self._status = TcpConnection.Status.DISCONNECTED
-            raise ConnectionError(f"Connection lost while sending data: {e}") from e
+            raise TcpConnection.ConnectionError(
+                f"Connection lost while sending data: {e}"
+            ) from e
 
     def receive(self, n: int) -> bytes:
         if self._status != TcpConnection.Status.CONNECTED:
-            raise ConnectionError(
+            raise TcpConnection.ConnectionError(
                 f"Cannot receive data, connection status is: {self._status.value}"
             )
         try:
             data = self._socket.recv(n)
             if not data:
                 self._status = TcpConnection.Status.DISCONNECTED
-                raise ConnectionError("Peer closed the connection gracefully.")
+                raise TcpConnection.ConnectionError(
+                    "Peer closed the connection gracefully."
+                )
             return data
         except (ConnectionResetError, OSError) as e:
             self._status = TcpConnection.Status.DISCONNECTED
-            raise ConnectionError(f"Connection lost while receiving data: {e}") from e
+            raise TcpConnection.ConnectionError(
+                f"Connection lost while receiving data: {e}"
+            ) from e
 
     def close(self) -> None:
         if self._status == TcpConnection.Status.CONNECTED:
