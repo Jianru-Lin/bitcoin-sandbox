@@ -905,6 +905,15 @@ class TestBlockHeader(unittest.TestCase):
         self.assertEqual(header.nonce, 0x7C2BAC1D)
 
 
+class TestBlockBody(unittest.TestCase):
+    def test_decode_genesis_block_body(self):
+        genesis_block_body_bytes = bytes.fromhex(
+            "0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+        )
+        body = BlockBody.decode_from_bytes(genesis_block_body_bytes)
+        self.assertEqual(body.encode_to_bytes(), genesis_block_body_bytes)
+
+
 class TestCompactSize(unittest.TestCase):
     def test_encode_underflow(self):
         with self.assertRaises(ValueError):
