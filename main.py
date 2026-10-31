@@ -14,8 +14,9 @@ from concurrent.futures import (
     as_completed,
 )
 from dataclasses import dataclass
-from enum import IntEnum, IntFlag
+from enum import Enum, IntEnum, IntFlag
 from pathlib import Path
+from types import TracebackType
 from typing import (
     Annotated,
     ClassVar,
@@ -3596,6 +3597,85 @@ class Block:
                 f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Block"
             )
         return block
+
+
+class TcpConnection:
+    class ConnectionError(Exception):
+        pass
+
+    class Status(Enum):
+        DISCONNECTED = "DISCONNECTED"
+        CONNECTED = "CONNECTED"
+        CLOSED = "CLOSED"
+
+    _socket: socket.socket
+    _status: Status
+
+    def __init__(self, sock: socket.socket) -> None:
+        self._socket = sock
+        self._status = TcpConnection.Status.CONNECTED
+
+    @property
+    def status(self) -> Status:
+        return self._status
+
+    def send(self, data: bytes) -> None:
+        if self._status != TcpConnection.Status.CONNECTED:
+            raise ConnectionError(
+                f"Cannot send data, connection status is: {self._status.value}"
+            )
+        try:
+            self._socket.sendall(data)
+        except (BrokenPipeError, ConnectionResetError, OSError) as e:
+            self._status = TcpConnection.Status.DISCONNECTED
+            raise ConnectionError(f"Connection lost while sending data: {e}") from e
+
+    def receive(self, n: int) -> bytes:
+        if self._status != TcpConnection.Status.CONNECTED:
+            raise ConnectionError(
+                f"Cannot receive data, connection status is: {self._status.value}"
+            )
+        try:
+            data = self._socket.recv(n)
+            if not data:
+                self._status = TcpConnection.Status.DISCONNECTED
+                raise ConnectionError("Peer closed the connection gracefully.")
+            return data
+        except (ConnectionResetError, OSError) as e:
+            self._status = TcpConnection.Status.DISCONNECTED
+            raise ConnectionError(f"Connection lost while receiving data: {e}") from e
+
+    def close(self) -> None:
+        if self._status == TcpConnection.Status.CONNECTED:
+            self._status = TcpConnection.Status.CLOSED
+            try:
+                self._socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            finally:
+                self._socket.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    @staticmethod
+    def connect(host: str, port: int, timeout: float = 10.0) -> TcpConnection:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        try:
+            sock.connect((host, port))
+        except Exception as e:
+            sock.close()
+            raise ConnectionError(f"Failed to connect to {host}:{port}: {e}") from e
+        return TcpConnection(sock)
 
 
 class DNS:
