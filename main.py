@@ -3680,6 +3680,58 @@ class TcpConnection:
         return TcpConnection(sock)
 
 
+class TcpServer:
+    class Error(Exception):
+        pass
+
+    _server_socket: socket.socket
+    _is_running: bool
+
+    def __init__(self, server_socket: socket.socket) -> None:
+        self._server_socket = server_socket
+        self._is_running = True
+
+    def accept(self) -> Iterator[TcpConnection]:
+        while self._is_running:
+            try:
+                temp = self._server_socket.accept()
+                client_socket = temp[0]
+                yield TcpConnection(client_socket)
+            except OSError:
+                break
+
+    def close(self) -> None:
+        if self._is_running:
+            self._is_running = False
+            try:
+                self._server_socket.close()
+            except OSError:
+                pass
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    @staticmethod
+    def bind(host: str, port: int, backlog: int = 128) -> TcpServer:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+            sock.listen(backlog)
+        except Exception as e:
+            sock.close()
+            raise TcpServer.Error(f"Failed to bind server on {host}:{port}: {e}") from e
+        return TcpServer(sock)
+
+
 class DNS:
     @staticmethod
     def resolve(host: str) -> list[str]:
