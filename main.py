@@ -3797,7 +3797,7 @@ class Message:
     COMMAND_SIZE: ClassVar[int] = 12
 
     magic: bytes
-    command: str
+    command: bytes
     checksum: bytes
     payload: bytes
 
@@ -3806,27 +3806,36 @@ class Message:
             raise ValueError(
                 f"Network magic must be exactly 4 bytes, got {len(self.magic)}"
             )
-        if len(self.command.encode("ascii")) > self.COMMAND_SIZE:
+        if len(self.command) != self.COMMAND_SIZE:
             raise ValueError(
-                f"Command name '{self.command}' exceeds maximum {self.COMMAND_SIZE} bytes"
+                f"Command must be exactly {self.COMMAND_SIZE} bytes, got {len(self.command)}"
             )
         if len(self.checksum) != 4:
             raise ValueError(
                 f"Checksum must be exactly 4 bytes, got {len(self.checksum)}"
             )
 
+    def is_command_ascii(self) -> bool:
+        try:
+            _ = self.get_command_str()
+            return True
+        except UnicodeDecodeError, ValueError:
+            return False
+
+    def get_command_str(self) -> str:
+        return Message.decode_command(self.command)
+
     def is_checksum_valid(self) -> bool:
-        expected = ScriptCrypto.hash256(self.payload)[:4]
+        expected = Message.calculate_payload_checksum(self.payload)
         return self.checksum == expected
 
     def with_updated_checksum(self) -> Message:
-        new_checksum = ScriptCrypto.hash256(self.payload)[:4]
+        new_checksum = Message.calculate_payload_checksum(self.payload)
         return dataclasses.replace(self, checksum=new_checksum)
 
     def encode(self, writer: Writer) -> None:
         writer.write_bytes(self.magic)
-        command_bytes = self.command.encode("ascii").ljust(self.COMMAND_SIZE, b"\x00")
-        writer.write_bytes(command_bytes)
+        writer.write_bytes(self.command)
         payload_len = len(self.payload)
         writer.write_uint32_le(payload_len)
         writer.write_bytes(self.checksum)
@@ -3840,8 +3849,7 @@ class Message:
     @staticmethod
     def decode(reader: Reader) -> Message:
         magic = reader.read_bytes(4)
-        raw_command = reader.read_bytes(Message.COMMAND_SIZE)
-        command = raw_command.rstrip(b"\x00").decode("ascii", errors="strict")
+        command = reader.read_bytes(Message.COMMAND_SIZE)
         payload_len = reader.read_uint32_le()
         checksum = reader.read_bytes(4)
         payload = reader.read_bytes(payload_len)
@@ -3856,6 +3864,32 @@ class Message:
                 f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Message"
             )
         return message
+
+    @staticmethod
+    def encode_command(command: str) -> bytes:
+        raw = command.encode("ascii").ljust(Message.COMMAND_SIZE, b"\x00")
+        if len(raw) != Message.COMMAND_SIZE:
+            raise ValueError(
+                f"Command must be exactly {Message.COMMAND_SIZE} bytes, got {len(raw)}"
+            )
+        return raw
+
+    @staticmethod
+    def decode_command(raw: bytes) -> str:
+        return raw.rstrip(b"\x00").decode("ascii", errors="strict")
+
+    @staticmethod
+    def calculate_payload_checksum(payload: bytes) -> bytes:
+        return ScriptCrypto.hash256(payload)[:4]
+
+    @staticmethod
+    def create(magic: bytes, command: str, payload: bytes) -> Message:
+        return Message(
+            magic=magic,
+            command=Message.encode_command(command),
+            checksum=Message.calculate_payload_checksum(payload),
+            payload=payload,
+        )
 
 
 class DNS:
