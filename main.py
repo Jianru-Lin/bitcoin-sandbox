@@ -31,6 +31,22 @@ from typing import (
 from btclib.ecc import dsa, ssa
 
 
+class Reader(Protocol):
+    def read_byte(self) -> int: ...
+    def read_bytes(self, n: int) -> bytes: ...
+    def read_uint16_le(self) -> int: ...
+    def read_uint32_le(self) -> int: ...
+    def read_uint64_le(self) -> int: ...
+
+
+class Writer(Protocol):
+    def write_byte(self, value: int) -> None: ...
+    def write_bytes(self, data: bytes) -> None: ...
+    def write_uint16_le(self, value: int) -> None: ...
+    def write_uint32_le(self, value: int) -> None: ...
+    def write_uint64_le(self, value: int) -> None: ...
+
+
 class BytesReader:
     _raw: bytes
     _pc: int
@@ -3312,7 +3328,7 @@ class BlockHeader:
         writer = BytesWriter()
         return self.encode_without_nonce(writer)
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         writer.write_bytes(self.encode_without_nonce_to_bytes())
         writer.write_uint32_le(self.nonce)
 
@@ -3322,7 +3338,7 @@ class BlockHeader:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> BlockHeader:
+    def decode(reader: Reader) -> BlockHeader:
         return BlockHeader(
             version=reader.read_uint32_le(),
             prev_block_hash=reader.read_bytes(32),
@@ -3344,7 +3360,7 @@ class BlockHeader:
 
 class CompactSize:
     @staticmethod
-    def encode(value: int, writer: BytesWriter):
+    def encode(value: int, writer: Writer):
         if value < 0:
             raise ValueError(f"CompactSize cannot be negative: {value}")
         if value < 0xFD:
@@ -3370,7 +3386,7 @@ class CompactSize:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> int:
+    def decode(reader: Reader) -> int:
         first_byte = reader.read_byte()
         if first_byte < 0xFD:
             return first_byte
@@ -3399,7 +3415,7 @@ class OutPoint:
     txid: bytes
     index: int
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         if len(self.txid) != 32:
             raise ValueError(f"Txid must be exactly 32 bytes, got {len(self.txid)}")
         writer.write_bytes(self.txid)
@@ -3411,7 +3427,7 @@ class OutPoint:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> OutPoint:
+    def decode(reader: Reader) -> OutPoint:
         return OutPoint(txid=reader.read_bytes(32), index=reader.read_uint32_le())
 
     @staticmethod
@@ -3431,7 +3447,7 @@ class TxIn:
     script_sig: bytes
     sequence: int
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         self.prevout.encode(writer)
         CompactSize.encode(len(self.script_sig), writer)
         writer.write_bytes(self.script_sig)
@@ -3443,7 +3459,7 @@ class TxIn:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> TxIn:
+    def decode(reader: Reader) -> TxIn:
         prevout = OutPoint.decode(reader)
         script_sig_len = CompactSize.decode(reader)
         script_sig = reader.read_bytes(script_sig_len)
@@ -3466,7 +3482,7 @@ class TxOut:
     value: int
     script_pubkey: bytes
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         writer.write_uint64_le(self.value)
         CompactSize.encode(len(self.script_pubkey), writer)
         writer.write_bytes(self.script_pubkey)
@@ -3477,7 +3493,7 @@ class TxOut:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> TxOut:
+    def decode(reader: Reader) -> TxOut:
         value = reader.read_uint64_le()
         script_pubkey_len = CompactSize.decode(reader)
         script_pubkey = reader.read_bytes(script_pubkey_len)
@@ -3501,7 +3517,7 @@ class Transaction:
     vout: list[TxOut]
     lock_time: int
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         writer.write_uint32_le(self.version)
         CompactSize.encode(len(self.vin), writer)
         for txin in self.vin:
@@ -3517,7 +3533,7 @@ class Transaction:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> Transaction:
+    def decode(reader: Reader) -> Transaction:
         version = reader.read_uint32_le()
         vin_count = CompactSize.decode(reader)
         vin = [TxIn.decode(reader) for _ in range(vin_count)]
@@ -3541,7 +3557,7 @@ class Transaction:
 class BlockBody:
     transactions: list[Transaction]
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         CompactSize.encode(len(self.transactions), writer)
         for tx in self.transactions:
             tx.encode(writer)
@@ -3552,7 +3568,7 @@ class BlockBody:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> BlockBody:
+    def decode(reader: Reader) -> BlockBody:
         tx_count = CompactSize.decode(reader)
         transactions = [Transaction.decode(reader) for _ in range(tx_count)]
         return BlockBody(transactions=transactions)
@@ -3573,7 +3589,7 @@ class Block:
     header: BlockHeader
     body: BlockBody
 
-    def encode(self, writer: BytesWriter) -> None:
+    def encode(self, writer: Writer) -> None:
         self.header.encode(writer)
         self.body.encode(writer)
 
@@ -3583,7 +3599,7 @@ class Block:
         return writer.to_bytes()
 
     @staticmethod
-    def decode(reader: BytesReader) -> Block:
+    def decode(reader: Reader) -> Block:
         header = BlockHeader.decode(reader)
         body = BlockBody.decode(reader)
         return Block(header=header, body=body)
