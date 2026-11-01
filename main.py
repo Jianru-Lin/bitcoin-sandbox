@@ -32,6 +32,12 @@ from typing import (
 from btclib.ecc import dsa, ssa
 
 
+class ASCII:
+    @staticmethod
+    def is_all_printable(raw: bytes) -> bool:
+        return all(0x20 <= byte <= 0x7E for byte in raw)
+
+
 class Reader(Protocol):
     def read_byte(self) -> int: ...
     def read_bytes(self, n: int) -> bytes: ...
@@ -3790,12 +3796,6 @@ class TcpServer:
             sock.close()
             raise TcpServer.Error(f"Failed to bind server on {host}:{port}: {e}") from e
         return TcpServer(sock)
-
-
-class ASCII:
-    @staticmethod
-    def is_all_printable(raw: bytes) -> bool:
-        return all(0x20 <= byte <= 0x7E for byte in raw)
 
 
 @dataclass(frozen=True)
