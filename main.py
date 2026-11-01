@@ -3792,6 +3792,12 @@ class TcpServer:
         return TcpServer(sock)
 
 
+class ASCII:
+    @staticmethod
+    def is_all_printable(raw: bytes) -> bool:
+        return all(0x20 <= byte <= 0x7E for byte in raw)
+
+
 @dataclass(frozen=True)
 class Message:
     COMMAND_SIZE: ClassVar[int] = 12
@@ -3815,12 +3821,10 @@ class Message:
                 f"Checksum must be exactly 4 bytes, got {len(self.checksum)}"
             )
 
-    def is_command_ascii(self) -> bool:
-        try:
-            _ = self.get_command_str()
-            return True
-        except UnicodeDecodeError, ValueError:
-            return False
+    def is_command_valid(self) -> bool:
+        return len(self.command) == self.COMMAND_SIZE and ASCII.is_all_printable(
+            self.command.rstrip(b"\x00")
+        )
 
     def get_command_str(self) -> str:
         return Message.decode_command(self.command)
@@ -3867,16 +3871,25 @@ class Message:
 
     @staticmethod
     def encode_command(command: str) -> bytes:
-        raw = command.encode("ascii").ljust(Message.COMMAND_SIZE, b"\x00")
-        if len(raw) != Message.COMMAND_SIZE:
-            raise ValueError(
-                f"Command must be exactly {Message.COMMAND_SIZE} bytes, got {len(raw)}"
-            )
-        return raw
+        command_bytes = command.encode("ascii")
+        if len(command_bytes) > Message.COMMAND_SIZE:
+            raise ValueError("Command too long")
+        if not ASCII.is_all_printable(command_bytes):
+            raise ValueError("Command contains non-printable ASCII")
+        raw_padded = command_bytes.ljust(Message.COMMAND_SIZE, b"\x00")
+        return raw_padded
 
     @staticmethod
     def decode_command(raw: bytes) -> str:
-        return raw.rstrip(b"\x00").decode("ascii", errors="strict")
+        if len(raw) != Message.COMMAND_SIZE:
+            raise ValueError("Invalid command length")
+
+        command_bytes = raw.rstrip(b"\x00")
+
+        if not ASCII.is_all_printable(command_bytes):
+            raise ValueError("Command contains non-printable ASCII")
+
+        return command_bytes.decode("ascii", errors="strict")
 
     @staticmethod
     def calculate_payload_checksum(payload: bytes) -> bytes:
