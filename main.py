@@ -1,3 +1,4 @@
+import dataclasses
 import hashlib
 import json
 import multiprocessing
@@ -3789,6 +3790,72 @@ class TcpServer:
             sock.close()
             raise TcpServer.Error(f"Failed to bind server on {host}:{port}: {e}") from e
         return TcpServer(sock)
+
+
+@dataclass(frozen=True)
+class Message:
+    COMMAND_SIZE: ClassVar[int] = 12
+
+    magic: bytes
+    command: str
+    checksum: bytes
+    payload: bytes
+
+    def __post_init__(self) -> None:
+        if len(self.magic) != 4:
+            raise ValueError(
+                f"Network magic must be exactly 4 bytes, got {len(self.magic)}"
+            )
+        if len(self.command.encode("ascii")) > self.COMMAND_SIZE:
+            raise ValueError(
+                f"Command name '{self.command}' exceeds maximum {self.COMMAND_SIZE} bytes"
+            )
+        if len(self.checksum) != 4:
+            raise ValueError(
+                f"Checksum must be exactly 4 bytes, got {len(self.checksum)}"
+            )
+
+    def is_checksum_valid(self) -> bool:
+        expected = ScriptCrypto.hash256(self.payload)[:4]
+        return self.checksum == expected
+
+    def with_updated_checksum(self) -> Message:
+        new_checksum = ScriptCrypto.hash256(self.payload)[:4]
+        return dataclasses.replace(self, checksum=new_checksum)
+
+    def encode(self, writer: Writer) -> None:
+        writer.write_bytes(self.magic)
+        command_bytes = self.command.encode("ascii").ljust(self.COMMAND_SIZE, b"\x00")
+        writer.write_bytes(command_bytes)
+        payload_len = len(self.payload)
+        writer.write_uint32_le(payload_len)
+        writer.write_bytes(self.checksum)
+        writer.write_bytes(self.payload)
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @staticmethod
+    def decode(reader: Reader) -> Message:
+        magic = reader.read_bytes(4)
+        raw_command = reader.read_bytes(Message.COMMAND_SIZE)
+        command = raw_command.rstrip(b"\x00").decode("ascii", errors="strict")
+        payload_len = reader.read_uint32_le()
+        checksum = reader.read_bytes(4)
+        payload = reader.read_bytes(payload_len)
+        return Message(magic=magic, command=command, checksum=checksum, payload=payload)
+
+    @classmethod
+    def decode_from_bytes(cls, raw: bytes) -> Message:
+        reader = BytesReader(raw)
+        message = cls.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Message"
+            )
+        return message
 
 
 class DNS:
