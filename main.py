@@ -3816,7 +3816,7 @@ class TcpServer:
 
 
 @dataclass(frozen=True)
-class Message:
+class Message(Encodable):
     COMMAND_SIZE: ClassVar[int] = 12
 
     magic: bytes
@@ -3857,6 +3857,7 @@ class Message:
         new_checksum = Message.calculate_payload_checksum(self.payload)
         return dataclasses.replace(self, checksum=new_checksum)
 
+    @override
     def encode(self, writer: Writer) -> None:
         writer.write_bytes(self.magic)
         writer.write_bytes(self.command)
@@ -3865,29 +3866,15 @@ class Message:
         writer.write_bytes(self.checksum)
         writer.write_bytes(self.payload)
 
-    def encode_to_bytes(self) -> bytes:
-        writer = BytesWriter()
-        self.encode(writer)
-        return writer.to_bytes()
-
-    @staticmethod
-    def decode(reader: Reader) -> Message:
+    @override
+    @classmethod
+    def decode(cls, reader: Reader) -> Self:
         magic = reader.read_bytes(4)
         command = reader.read_bytes(Message.COMMAND_SIZE)
         payload_len = reader.read_uint32_le()
         checksum = reader.read_bytes(4)
         payload = reader.read_bytes(payload_len)
-        return Message(magic=magic, command=command, checksum=checksum, payload=payload)
-
-    @classmethod
-    def decode_from_bytes(cls, raw: bytes) -> Message:
-        reader = BytesReader(raw)
-        message = cls.decode(reader)
-        if not reader.is_eof():
-            raise ValueError(
-                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding Message"
-            )
-        return message
+        return cls(magic=magic, command=command, checksum=checksum, payload=payload)
 
     @staticmethod
     def encode_command(command: str) -> bytes:
