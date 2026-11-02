@@ -3118,7 +3118,7 @@ class BlockValidator:
 
 
 @dataclass(frozen=True)
-class Bits:
+class Bits:  # TODO inherite fron Encodable
     base: int
     scale: int
 
