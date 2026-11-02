@@ -142,6 +142,29 @@ class BytesWriter:
         return bytes(self._buf)
 
 
+class Encodable(ABC):
+    def encode(self, writer: Writer) -> None: ...
+
+    def encode_to_bytes(self) -> bytes:
+        writer = BytesWriter()
+        self.encode(writer)
+        return writer.to_bytes()
+
+    @abstractmethod
+    @classmethod
+    def decode(cls, reader: Reader) -> Self: ...
+
+    @classmethod
+    def decode_from_bytes(cls, raw: bytes) -> Self:
+        reader = BytesReader(raw)
+        self = cls.decode(reader)
+        if not reader.is_eof():
+            raise ValueError(
+                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding {cls.__name__}"
+            )
+        return self
+
+
 # Check here https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h
 class Opcode(IntEnum):
     # Constants
@@ -3900,6 +3923,19 @@ class Message:
             checksum=Message.calculate_payload_checksum(payload),
             payload=payload,
         )
+
+
+class Command:
+    @dataclass(frozen=True)
+    class Version(Encodable):
+        name: str = "version"
+
+        def encode(self, writer: Writer) -> None:
+            pass
+
+        @classmethod
+        def decode(cls, reader: Reader) -> Self:
+            pass
 
 
 class DNS:
