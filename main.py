@@ -3925,9 +3925,18 @@ class Message:
         )
 
 
+class BaseCommand(Encodable, ABC):
+    name: str
+
+    def to_message(self, magic: bytes) -> Message:
+        return Message.create(
+            magic=magic, command=self.name, payload=self.encode_to_bytes()
+        )
+
+
 class Command:
     @dataclass(frozen=True)
-    class Version(Encodable):
+    class Version(BaseCommand):
         name: str = "version"
 
         def encode(self, writer: Writer) -> None:
