@@ -3330,7 +3330,7 @@ class MultiProcessMiner:
 
 
 @dataclass(frozen=True)
-class BlockHeader:
+class BlockHeader(Encodable):
     HEADER_SIZE: ClassVar[int] = 80
 
     version: int
@@ -3352,18 +3352,15 @@ class BlockHeader:
         writer = BytesWriter()
         return self.encode_without_nonce(writer)
 
+    @override
     def encode(self, writer: Writer) -> None:
         writer.write_bytes(self.encode_without_nonce_to_bytes())
         writer.write_uint32_le(self.nonce)
 
-    def encode_to_bytes(self) -> bytes:
-        writer = BytesWriter()
-        self.encode(writer)
-        return writer.to_bytes()
-
-    @staticmethod
-    def decode(reader: Reader) -> BlockHeader:
-        return BlockHeader(
+    @override
+    @classmethod
+    def decode(cls, reader: Reader) -> Self:
+        return cls(
             version=reader.read_uint32_le(),
             prev_block_hash=reader.read_bytes(32),
             merkle_root=reader.read_bytes(32),
@@ -3371,15 +3368,6 @@ class BlockHeader:
             bits=Bits.decode(reader.read_bytes(4)),
             nonce=reader.read_uint32_le(),
         )
-
-    @classmethod
-    def decode_from_bytes(cls, raw: bytes) -> BlockHeader:
-        if len(raw) != BlockHeader.HEADER_SIZE:
-            raise ValueError(
-                f"Block header must be exactly {BlockHeader.HEADER_SIZE} bytes, got {len(raw)}"
-            )
-        reader = BytesReader(raw)
-        return cls.decode(reader)
 
 
 class CompactSize:
