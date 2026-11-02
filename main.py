@@ -3435,34 +3435,21 @@ class CompactSize:
 
 
 @dataclass(frozen=True)
-class OutPoint:
+class OutPoint(Encodable):
     txid: bytes
     index: int
 
+    @override
     def encode(self, writer: Writer) -> None:
         if len(self.txid) != 32:
             raise ValueError(f"Txid must be exactly 32 bytes, got {len(self.txid)}")
         writer.write_bytes(self.txid)
         writer.write_uint32_le(self.index)
 
-    def encode_to_bytes(self) -> bytes:
-        writer = BytesWriter()
-        self.encode(writer)
-        return writer.to_bytes()
-
-    @staticmethod
-    def decode(reader: Reader) -> OutPoint:
-        return OutPoint(txid=reader.read_bytes(32), index=reader.read_uint32_le())
-
-    @staticmethod
-    def decode_from_bytes(raw: bytes) -> OutPoint:
-        reader = BytesReader(raw)
-        body = OutPoint.decode(reader)
-        if not reader.is_eof():
-            raise ValueError(
-                f"Trailing garbage: {reader.remaining} unconsumed bytes remaining after decoding OutPoint"
-            )
-        return body
+    @override
+    @classmethod
+    def decode(cls, reader: Reader) -> Self:
+        return cls(txid=reader.read_bytes(32), index=reader.read_uint32_le())
 
 
 @dataclass(frozen=True)
