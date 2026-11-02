@@ -3095,12 +3095,6 @@ class BlockValidator:
 
 
 @dataclass(frozen=True)
-class Peer:
-    host: str
-    port: int
-
-
-@dataclass(frozen=True)
 class Bits:
     base: int
     scale: int
@@ -3821,6 +3815,9 @@ class Message:
                 f"Checksum must be exactly 4 bytes, got {len(self.checksum)}"
             )
 
+    def is_valid(self) -> bool:
+        return self.is_checksum_valid() and self.is_command_valid()
+
     def is_command_valid(self) -> bool:
         return len(self.command) == self.COMMAND_SIZE and ASCII.is_all_printable(
             self.command.rstrip(b"\x00")
@@ -3936,15 +3933,60 @@ class ServiceFlags(IntFlag):
 
 
 @dataclass(frozen=True)
+class TargetPeer:
+    host: str
+    port: int
+
+
+@dataclass(frozen=True)
 class DnsSeed:
     host: str
 
-    def query(self, service_flags: ServiceFlags, default_port: int) -> list[Peer]:
+    def query(self, service_flags: ServiceFlags, default_port: int) -> list[TargetPeer]:
         dns_prefix = service_flags.to_dns_prefix()
         target_host = f"{dns_prefix}.{self.host}" if dns_prefix else self.host
         print(target_host)
         peers = DNS.resolve(target_host)
-        return [Peer(host, default_port) for host in peers]
+        return [TargetPeer(host, default_port) for host in peers]
+
+
+# class Peer:
+#     host: str
+#     port: int
+#     network_magic: bytes
+#     connection: TcpConnection
+#
+#     def __init__(
+#         self, host: str, port: int, network_magic: bytes, connection: TcpConnection
+#     ) -> None:
+#         self.network_magic = network_magic
+#         self.host = host
+#         self.port = port
+#         self.connection = connection
+#
+#     def close(self) -> None:
+#         self.connection.close()
+#
+#     def send_message(self, message: Message) -> None:
+#         self.connection.write_bytes(message.encode_to_bytes())
+#
+#     def receive_message(self, check_message: bool = True) -> Message:
+#         message = Message.decode(self.connection)
+#         if check_message:
+#             if message.magic != self.network_magic:
+#                 raise ValueError("Invalid message: magic mismatch")
+#             if not message.is_valid():
+#                 raise ValueError("Invalid message")
+#         return message
+#
+#     @classmethod
+#     def connect(
+#         cls, host: str, port: int, network_magic: bytes, timeout: float = 10.0
+#     ) -> Self:
+#         connection = TcpConnection.connect(host=host, port=port, timeout=timeout)
+#         return cls(
+#             host=host, port=port, network_magic=network_magic, connection=connection
+#         )
 
 
 @dataclass(frozen=True)
@@ -3964,8 +4006,8 @@ class Network(ABC):
 
     def peer_discovery(
         self, service_flags: ServiceFlags = ServiceFlags.NODE_NONE
-    ) -> list[Peer]:
-        peers: list[Peer] = []
+    ) -> list[TargetPeer]:
+        peers: list[TargetPeer] = []
         for seed in self.dns_seed_list():
             peers.extend(
                 seed.query(
