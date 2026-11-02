@@ -3155,7 +3155,7 @@ class Bits:  # TODO inherite fron Encodable
             0 < self.to_target() <= pow_limit
         )
 
-    def encode(self) -> bytes:
+    def encode_to_bytes(self) -> bytes:
         if not self.is_encodable():
             raise ValueError("Bits is not encodable")
         return self.base.to_bytes(3, byteorder="little") + bytes([self.scale])
@@ -3345,7 +3345,7 @@ class BlockHeader(Encodable):
         writer.write_bytes(self.prev_block_hash)
         writer.write_bytes(self.merkle_root)
         writer.write_uint32_le(self.timestamp)
-        writer.write_bytes(self.bits.encode())
+        writer.write_bytes(self.bits.encode_to_bytes())
         return writer.to_bytes()
 
     def encode_without_nonce_to_bytes(self) -> bytes:
