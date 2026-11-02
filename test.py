@@ -1,6 +1,5 @@
 import unittest
 from pathlib import Path
-from sys import byteorder
 
 from main import (
     AssemblyParser,

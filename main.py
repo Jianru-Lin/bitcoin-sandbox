@@ -150,8 +150,8 @@ class Encodable(ABC):
         self.encode(writer)
         return writer.to_bytes()
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def decode(cls, reader: Reader) -> Self: ...
 
     @classmethod
@@ -3935,16 +3935,19 @@ class BaseCommand(Encodable, ABC):
 
 
 class Command:
-    @dataclass(frozen=True)
-    class Version(BaseCommand):
-        name: str = "version"
+    pass
 
-        def encode(self, writer: Writer) -> None:
-            pass
 
-        @classmethod
-        def decode(cls, reader: Reader) -> Self:
-            pass
+#     @dataclass(frozen=True)
+#     class Version(BaseCommand):
+#         name: str = "version"
+#
+#         def encode(self, writer: Writer) -> None:
+#             pass
+#
+#         @classmethod
+#         def decode(cls, reader: Reader) -> Self:
+#             pass
 
 
 class DNS:
