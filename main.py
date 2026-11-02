@@ -3950,43 +3950,54 @@ class DnsSeed:
         return [TargetPeer(host, default_port) for host in peers]
 
 
-# class Peer:
-#     host: str
-#     port: int
-#     network_magic: bytes
-#     connection: TcpConnection
-#
-#     def __init__(
-#         self, host: str, port: int, network_magic: bytes, connection: TcpConnection
-#     ) -> None:
-#         self.network_magic = network_magic
-#         self.host = host
-#         self.port = port
-#         self.connection = connection
-#
-#     def close(self) -> None:
-#         self.connection.close()
-#
-#     def send_message(self, message: Message) -> None:
-#         self.connection.write_bytes(message.encode_to_bytes())
-#
-#     def receive_message(self, check_message: bool = True) -> Message:
-#         message = Message.decode(self.connection)
-#         if check_message:
-#             if message.magic != self.network_magic:
-#                 raise ValueError("Invalid message: magic mismatch")
-#             if not message.is_valid():
-#                 raise ValueError("Invalid message")
-#         return message
-#
-#     @classmethod
-#     def connect(
-#         cls, host: str, port: int, network_magic: bytes, timeout: float = 10.0
-#     ) -> Self:
-#         connection = TcpConnection.connect(host=host, port=port, timeout=timeout)
-#         return cls(
-#             host=host, port=port, network_magic=network_magic, connection=connection
-#         )
+class Peer:
+    class Error(Exception):
+        pass
+
+    host: str
+    port: int
+    network_magic: bytes
+    connection: TcpConnection
+
+    def __init__(
+        self, host: str, port: int, network_magic: bytes, connection: TcpConnection
+    ) -> None:
+        self.network_magic = network_magic
+        self.host = host
+        self.port = port
+        self.connection = connection
+
+    def close(self) -> None:
+        self.connection.close()
+
+    def send_message(self, message: Message) -> None:
+        self.connection.write_bytes(message.encode_to_bytes())
+
+    def receive_message(self, validate: bool = True) -> Message:
+        message = Message.decode(self.connection)
+        if validate:
+            if message.magic != self.network_magic:
+                raise Peer.Error(
+                    f"Network magic mismatch from {self.host}:{self.port}: expected {self.network_magic.hex()}, got {message.magic.hex()}"
+                )
+            if not message.is_command_valid():
+                raise Peer.Error(
+                    f"Invalid or non-printable command received from {self.host}:{self.port}"
+                )
+            if not message.is_checksum_valid():
+                raise Peer.Error(
+                    f"Message checksum verification failed for command '{message.get_command_str()}'"
+                )
+        return message
+
+    @classmethod
+    def connect(
+        cls, host: str, port: int, network_magic: bytes, timeout: float = 10.0
+    ) -> Self:
+        connection = TcpConnection.connect(host=host, port=port, timeout=timeout)
+        return cls(
+            host=host, port=port, network_magic=network_magic, connection=connection
+        )
 
 
 @dataclass(frozen=True)
